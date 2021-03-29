@@ -23,7 +23,6 @@ jobs:
         pip install -U pip
         pip install -r requirements.txt -r test_requirements.txt
         pip install -e .
-    - name: Test with pytest (full)
-      if: github.ref != 'refs/heads/main'
+    - name: Test with pytest
       run: |
         pytest
