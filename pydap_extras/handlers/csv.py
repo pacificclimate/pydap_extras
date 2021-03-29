@@ -88,22 +88,25 @@ class CSVHandler(BaseHandler):
         BaseHandler.__init__(self)
 
         try:
-            with open(filepath, 'Ur') as fp:
+            with open(filepath, "Ur") as fp:
                 reader = csv.reader(fp, quoting=csv.QUOTE_NONNUMERIC)
                 vars = next(reader)
         except Exception as exc:
-            message = f'Unable to open file {filepath}: {exc}'
-            raise OpenFileError(message)
+            raise OpenFileError(f"Unable to open file {filepath}: {exc}")
 
         self.additional_headers.append(
-                ('Last-modified', (formatdate(time.mktime(time.localtime(os.stat(filepath)[ST_MTIME]))))))
+            (
+                "Last-modified",
+                (formatdate(time.mktime(time.localtime(os.stat(filepath)[ST_MTIME])))),
+            )
+        )
 
         # build dataset
         name = os.path.split(filepath)[1]
         self.dataset = DatasetType(name)
 
         # add sequence and children for each column
-        seq = self.dataset['sequence'] = SequenceType('sequence')
+        seq = self.dataset["sequence"] = SequenceType("sequence")
         for var in vars:
             seq[var] = BaseType(var)
 
@@ -111,7 +114,7 @@ class CSVHandler(BaseHandler):
         seq.data = CSVData(filepath, copy.copy(seq))
 
         # add extra attributes
-        metadata = "{0}.json".format(filepath)
+        metadata = f"{filepath}.json"
         if os.path.exists(metadata):
             with open(metadata) as fp:
                 attributes = json.load(fp)
@@ -193,8 +196,10 @@ class CSVData(IterData):
         >>> temp_file.remove()
 
     """
-    def __init__(self, filepath, template, ifilter=None, imap=None,
-                 islice=None, level=0):
+
+    def __init__(
+        self, filepath, template, ifilter=None, imap=None, islice=None, level=0
+    ):
         self.filepath = filepath
         self.template = template
         self.level = level
@@ -207,10 +212,9 @@ class CSVData(IterData):
     def stream(self):
         """Generator that yield lines of the file."""
         try:
-            fp = open(self.filepath, 'Ur')
+            fp = open(self.filepath, "Ur")
         except Exception as exc:
-            message = f'Unable to open file {self.filepath}: {exc}'
-            raise OpenFileError(message)
+            raise OpenFileError(f"Unable to open file {self.filepath}: {exc}")
 
         reader = csv.reader(fp, quoting=csv.QUOTE_NONNUMERIC)
         next(reader)  # consume var names
@@ -220,13 +224,19 @@ class CSVData(IterData):
 
     def __copy__(self):
         """Return a lightweight copy."""
-        return self.__class__(self.filepath, copy.copy(self.template),
-                              self.ifilter[:], self.imap[:], self.islice[:],
-                              self.level)
+        return self.__class__(
+            self.filepath,
+            copy.copy(self.template),
+            self.ifilter[:],
+            self.imap[:],
+            self.islice[:],
+            self.level,
+        )
 
 
 def _test():
     import doctest
+
     doctest.testmod()
 
 
@@ -238,5 +248,6 @@ if __name__ == "__main__":
 
     application = CSVHandler(sys.argv[1])
     from pydap.wsgi.ssf import ServerSideFunctions
+
     application = ServerSideFunctions(application)
-    run_simple('localhost', 8001, application, use_reloader=True)
+    run_simple("localhost", 8001, application, use_reloader=True)
