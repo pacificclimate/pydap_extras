@@ -6,7 +6,7 @@ setup(
     name="pydap_extras",
     version=".".join(str(d) for d in __version__),
     description="PCIC Pydap handlers and Responses for Python 3",
-    install_requires=["pydap"],
+    install_requires=["pydap", "requests"],
     packages=["pydap_extras"],
     zip_safe=True,
     classifiers=[

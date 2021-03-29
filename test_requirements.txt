@@ -1,1 +1,6 @@
-pytest==6.2.2 
+pytest==6.2.2
+black==20.8b1
+
+# app deps
+gsw==3.0.6
+coards==1.0.5
