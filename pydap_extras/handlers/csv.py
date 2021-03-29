@@ -238,16 +238,3 @@ def _test():
     import doctest
 
     doctest.testmod()
-
-
-if __name__ == "__main__":
-    import sys
-    from werkzeug.serving import run_simple
-
-    _test()
-
-    application = CSVHandler(sys.argv[1])
-    from pydap.wsgi.ssf import ServerSideFunctions
-
-    application = ServerSideFunctions(application)
-    run_simple("localhost", 8001, application, use_reloader=True)
