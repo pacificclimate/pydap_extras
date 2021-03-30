@@ -4,6 +4,7 @@ import os
 from tempfile import NamedTemporaryFile
 from sqlalchemy import create_engine
 
+
 @pytest.fixture(scope="session")
 def simple_data():
     data = [
@@ -28,7 +29,7 @@ def simple_data_file(tmpdir_factory, simple_data):
 
 @pytest.fixture
 def testconfig(testdb, request):
-    config = '''database:
+    config = """database:
   dsn: "sqlite:///{0}"
   id: "mytable"
   table: "mytable"
@@ -43,26 +44,30 @@ sequence:
 foo:
   col: "foo"
   type: Integer
-'''.format(testdb)
+""".format(
+        testdb
+    )
 
-    with NamedTemporaryFile('w', delete=False) as myconfig:
+    with NamedTemporaryFile("w", delete=False) as myconfig:
         myconfig.write(config)
         fname = myconfig.name
 
     def fin():
         os.remove(fname)
+
     request.addfinalizer(fin)
     return fname
 
 
 @pytest.fixture
 def testdb(request):
-    with NamedTemporaryFile('w', delete=False) as f:
-        engine = create_engine('sqlite:///' + f.name, echo=True)
+    with NamedTemporaryFile("w", delete=False) as f:
+        engine = create_engine("sqlite:///" + f.name, echo=True)
         engine.execute("CREATE TABLE mytable (foo INTEGER);")
         fname = f.name
 
     def fin():
         os.remove(fname)
+
     request.addfinalizer(fin)
     return fname

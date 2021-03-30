@@ -61,12 +61,14 @@ class EngineCreator(dict):
     def __missing__(self, key):
         self[key] = create_engine(key)
         return self[key]
+
+
 Engines = EngineCreator()
 
 # From http://docs.sqlalchemy.org/en/rel_0_9/orm/session.html#session-faq-whentocreate
 @contextmanager
 def session_scope(dsn):
-    '''Provide a transactional scope around a series of operations. Cleans up the connection even in the case of failure'''
+    """Provide a transactional scope around a series of operations. Cleans up the connection even in the case of failure"""
     factory = sessionmaker(bind=Engines[dsn])
     session = factory()
     try:
@@ -93,22 +95,22 @@ class SQLHandler(BaseHandler):
 
         # open the YAML file and parse configuration
         try:
-            with open(filepath, 'Ur') as fp:
-                fp = open(filepath, 'Ur')
+            with open(filepath, "Ur") as fp:
+                fp = open(filepath, "Ur")
                 config = yaml.load(fp)
         except Exception as exc:
-            message = 'Unable to open file {filepath}: {exc}'.format(filepath=filepath, exc=exc)
-            raise OpenFileError(message)
+            raise OpenFileError(f"Unable to open file {filepath}: {exc}")
 
         # add last-modified header from config, if available
         try:
-            last_modified = config['dataset']['last_modified']
+            last_modified = config["dataset"]["last_modified"]
             if isinstance(last_modified, tuple):
                 last_modified = last_modified[0]
             if isinstance(last_modified, basestring):
-                last_modified = datetime.strptime(last_modified, '%Y-%m-%d %H:%M:%S')
+                last_modified = datetime.strptime(last_modified, "%Y-%m-%d %H:%M:%S")
             self.additional_headers.append(
-                    ('Last-modified', formatdate( time.mktime( last_modified.timetuple() ) )))
+                ("Last-modified", formatdate(time.mktime(last_modified.timetuple())))
+            )
         except KeyError:
             pass
 
@@ -116,46 +118,44 @@ class SQLHandler(BaseHandler):
         # so they are not specified in the config file. Instead, we request a single
         # row of data to inspect the data types.
         # FIXME: type peeking does not work if there are NA values in the sequence!!!
-        cols = tuple(key for key in config if 'col' in config[key])
-        with session_scope(config['database']['dsn']) as conn:
+        cols = tuple(key for key in config if "col" in config[key])
+        with session_scope(config["database"]["dsn"]) as conn:
             query = "SELECT {cols} FROM {table} LIMIT 1".format(
-                     cols=', '.join(config[key]['col'] for key in cols),
-                     table=config['database']['table'])
-            print(query)
+                cols=", ".join(config[key]["col"] for key in cols),
+                table=config["database"]["table"],
+            )
             results = conn.execute(query)
-            print(results.cursor)
             first_row = results.fetchone()
-            print(first_row)
-
-            print(results.rowcount)
 
         dtypes = {}
         if results.rowcount > 0:
-            for col, value, description in zip(cols, first_row, results.cursor.description):
+            for col, value, description in zip(
+                cols, first_row, results.cursor.description
+            ):
                 # FIXME: This is fraaaagile, and depends on internal, undocumented behaviour from SQLAlchemy
                 if value is None:
                     # the value is NULL... try to use the typecode
                     dtypes[col] = {
-                        700: np.dtype('float64'),
-                        701: np.dtype('float64'),
-                        1114: np.dtype('datetime64')
+                        700: np.dtype("float64"),
+                        701: np.dtype("float64"),
+                        1114: np.dtype("datetime64"),
                     }[description.type_code]
                 elif type(value) == datetime:
-                    dtypes[col] = np.dtype('datetime64')
+                    dtypes[col] = np.dtype("datetime64")
                 else:
                     dtypes[col] = np.array(value).dtype
 
         # create the dataset, adding attributes from the config file
-        attrs = config.get('dataset', {}).copy()
-        name = attrs.pop('name', os.path.split(filepath)[1])
+        attrs = config.get("dataset", {}).copy()
+        name = attrs.pop("name", os.path.split(filepath)[1])
         self.dataset = DatasetType(name, attrs)
 
         # and now create the sequence
-        attrs = config.get('sequence', {}).copy()
-        name = attrs.pop('name', 'sequence')
+        attrs = config.get("sequence", {}).copy()
+        name = attrs.pop("name", "sequence")
         seq = self.dataset[quote(name)] = SequenceType(name, config, attrs)
         for var in cols:
-            attrs = {k : v for k, v in config[var].items() if k != 'col'}
+            attrs = {k: v for k, v in config[var].items() if k != "col"}
             seq[var] = BaseType(var, attributes=attrs)
 
         # set the data
@@ -167,7 +167,7 @@ class SQLData(CSVData):
     Emulate a Numpy structured array using an SQL database.
     Here's a standard dataset for testing sequential data:
         >>> data = [
-        ... (10, 15.2, 'Diamond_St'), 
+        ... (10, 15.2, 'Diamond_St'),
         ... (11, 13.1, 'Blacktail_Loop'),
         ... (12, 13.3, 'Platinum_St'),
         ... (13, 12.1, 'Kodiak_Trail')]
@@ -242,7 +242,19 @@ class SQLData(CSVData):
         Blacktail_Loop
         Kodiak_Trail
     """
-    def __init__(self, config, id, cols, dtypes, template, imap=None, selection=None, slice_=None, level=0):
+
+    def __init__(
+        self,
+        config,
+        id,
+        cols,
+        dtypes,
+        template,
+        imap=None,
+        selection=None,
+        slice_=None,
+        level=0,
+    ):
         self.template = template
         self.config = config
         self.id = id
@@ -254,23 +266,21 @@ class SQLData(CSVData):
         self.imap = imap or []
 
         # mapping between variable names and their columns
-        self.mapping = {key : config[key]['col'] for key in config if 'col' in config[key]}
+        self.mapping = {
+            key: config[key]["col"] for key in config if "col" in config[key]
+        }
 
     @property
     def dtype(self):
-        print("DTYPES")
-        print(self.dtypes)
-        print("cols")
-        print(self.cols)
-        #return self.dtypes[self.cols]
-        return np.dtype('datetime64')
+        # return self.dtypes[self.cols]
+        return np.dtype("datetime64")
 
     @property
     def query(self):
-        if 'order' in self.config['database']:
-            order = 'ORDER BY {order}'.format(**self.config['database'])
+        if "order" in self.config["database"]:
+            order = "ORDER BY {order}".format(**self.config["database"])
         else:
-            order = ''
+            order = ""
 
         if isinstance(self.cols, tuple):
             cols = self.cols
@@ -279,16 +289,18 @@ class SQLData(CSVData):
 
         where, params = parse_queries(self.selection, self.mapping)
         if where:
-            where = 'WHERE {conditions}'.format(conditions=' AND '.join(where))
+            where = "WHERE {conditions}".format(conditions=" AND ".join(where))
         else:
-            where = ''
+            where = ""
 
         sql = "SELECT {cols} FROM {table} {where} {order} LIMIT {limit} OFFSET {offset}".format(
-                cols=', '.join(self.config[key]['col'] for key in cols),
-                table=self.config['database']['table'],
-                where=where, order=order,
-                limit=(self.slice[0].stop or sys.maxsize)-(self.slice[0].start or 0),
-                offset=self.slice[0].start or 0)
+            cols=", ".join(self.config[key]["col"] for key in cols),
+            table=self.config["database"]["table"],
+            where=where,
+            order=order,
+            limit=(self.slice[0].stop or sys.maxsize) - (self.slice[0].start or 0),
+            offset=self.slice[0].start or 0,
+        )
 
         if params:
             return [sql, params]
@@ -296,16 +308,16 @@ class SQLData(CSVData):
             return [sql]
 
     def __len__(self):
-        with session_scope(self.config['database']['dsn']) as conn:
+        with session_scope(self.config["database"]["dsn"]) as conn:
             data = conn.execute(*self.query)
             rv = data.rowcount
         return rv
 
     def __iter__(self):
-        with session_scope(self.config['database']['dsn']) as conn:
+        with session_scope(self.config["database"]["dsn"]) as conn:
             data = conn.execute(*self.query)
 
-            # there's no standard way of choosing every n result from a query using 
+            # there's no standard way of choosing every n result from a query using
             # SQL, so we need to filter it on Python side
             data = itertools.islice(data, 0, None, self.slice[0].step)
 
@@ -316,10 +328,18 @@ class SQLData(CSVData):
             for row in data:
                 yield row
 
-
     def __copy__(self):
-        return self.__class__(self.config, self.id, self.cols[:],
-                self.dtypes, self.template, self.imap, self.selection[:], self.slice[:], self.level)
+        return self.__class__(
+            self.config,
+            self.id,
+            self.cols[:],
+            self.dtypes,
+            self.template,
+            self.imap,
+            self.selection[:],
+            self.slice[:],
+            self.level,
+        )
 
 
 def parse_queries(selection, mapping):
@@ -330,25 +350,27 @@ def parse_queries(selection, mapping):
     params = {}
     for i, expression in enumerate(selection):
         if isinstance(expression, str):
-            id1, op, id2 = re.split('(<=|>=|!=|=~|>|<|=)', expression, maxsplit=1)
+            id1, op, id2 = re.split("(<=|>=|!=|=~|>|<|=)", expression, maxsplit=1)
 
             # a should be a variable in the children
-            name1 = id1.split('.')[-1]
+            name1 = id1.split(".")[-1]
             if name1 in mapping:
                 a = mapping[name1]
             else:
                 raise ConstraintExpressionError(
-                        'Invalid constraint expression: "{expression}" ("{id}" is not a valid variable)'.format(
-                        expression=expression, id=id1))
+                    f'Invalid constraint expression: "{expression}" ("{id1}" is not a valid variable)'
+                )
 
             # b could be a variable or constant
-            name2 = id2.split('.')[-1]
+            name2 = id2.split(".")[-1]
             if name2 in mapping:
                 b = mapping[name2]
             else:
                 b = ast.literal_eval(id2)
 
-            out.append('({a} {op} :{i})'.format(a=a, op=op, i=i)) # bad hack for positional args since Session.execute doesn't support them
+            out.append(
+                f"({a} {op} :{i})"
+            )  # bad hack for positional args since Session.execute doesn't support them
             params[str(i)] = b
 
     return out, params
@@ -361,10 +383,12 @@ def yaml_query(loader, node):
     allows queries to be embedded in the file using the `!Query` identifier.
     """
     # read DSN
-    for obj in [obj for obj in loader.constructed_objects if isinstance(obj, yaml.MappingNode)]:
+    for obj in [
+        obj for obj in loader.constructed_objects if isinstance(obj, yaml.MappingNode)
+    ]:
         try:
             mapping = loader.construct_mapping(obj)
-            dsn = mapping['dsn']
+            dsn = mapping["dsn"]
             break
         except:
             pass
@@ -376,9 +400,11 @@ def yaml_query(loader, node):
 
     return tuple(results)
 
-yaml.add_constructor('!Query', yaml_query)
+
+yaml.add_constructor("!Query", yaml_query)
 
 
 def _test():
     import doctest
+
     doctest.testmod()
