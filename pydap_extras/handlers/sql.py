@@ -127,23 +127,23 @@ class SQLHandler(BaseHandler):
             results = conn.execute(query)
             first_row = results.fetchone()
 
-        dtypes = {}
-        if results.rowcount > 0:
-            for col, value, description in zip(
-                cols, first_row, results.cursor.description
-            ):
-                # FIXME: This is fraaaagile, and depends on internal, undocumented behaviour from SQLAlchemy
-                if value is None:
-                    # the value is NULL... try to use the typecode
-                    dtypes[col] = {
-                        700: np.dtype("float64"),
-                        701: np.dtype("float64"),
-                        1114: np.dtype("datetime64"),
-                    }[description.type_code]
-                elif type(value) == datetime:
-                    dtypes[col] = np.dtype("datetime64")
-                else:
-                    dtypes[col] = np.array(value).dtype
+            dtypes = {}
+            if first_row:
+                for col, value, description in zip(
+                    cols, first_row, results.cursor.description
+                ):
+                    # FIXME: This is fraaaagile, and depends on internal, undocumented behaviour from SQLAlchemy
+                    if value is None:
+                        # the value is NULL... try to use the typecode
+                        dtypes[col] = {
+                            700: np.dtype("float64"),
+                            701: np.dtype("float64"),
+                            1114: np.dtype("datetime64"),
+                        }[description.type_code]
+                    elif type(value) == datetime:
+                        dtypes[col] = np.dtype("datetime64")
+                    else:
+                        dtypes[col] = np.array(value).dtype
 
         # create the dataset, adding attributes from the config file
         attrs = config.get("dataset", {}).copy()
