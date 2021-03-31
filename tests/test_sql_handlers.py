@@ -2,7 +2,7 @@ from pydap_extras.handlers.sql import SQLHandler, parse_queries
 from webob.request import Request
 
 
-def test_nodata(testconfig):
+def test_data(testconfig):
     handler = SQLHandler(testconfig)
     req = Request.blank("/foo.sql.das")
     assert handler
@@ -10,7 +10,6 @@ def test_nodata(testconfig):
 
     resp = req.get_response(handler)
     assert resp.status == "200 OK"
-
     assert (
         resp.body.decode("utf-8")
         == """Attributes {

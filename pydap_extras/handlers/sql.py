@@ -272,8 +272,8 @@ class SQLData(CSVData):
 
     @property
     def dtype(self):
-        # return self.dtypes[self.cols]
-        return np.dtype("datetime64")
+        peek = next(iter(self))
+        return np.array(peek).dtype
 
     @property
     def query(self):
