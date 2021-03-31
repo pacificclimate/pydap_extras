@@ -44,7 +44,7 @@ from email.utils import formatdate
 import operator
 from contextlib import contextmanager
 
-from sqlalchemy import create_engine
+from sqlalchemy import create_engine, MetaData, schema
 from sqlalchemy.orm import sessionmaker
 import yaml
 import numpy as np
@@ -128,22 +128,21 @@ class SQLHandler(BaseHandler):
             first_row = results.fetchone()
 
             dtypes = {}
-            if first_row:
-                for col, value, description in zip(
-                    cols, first_row, results.cursor.description
-                ):
-                    # FIXME: This is fraaaagile, and depends on internal, undocumented behaviour from SQLAlchemy
-                    if value is None:
-                        # the value is NULL... try to use the typecode
-                        dtypes[col] = {
-                            700: np.dtype("float64"),
-                            701: np.dtype("float64"),
-                            1114: np.dtype("datetime64"),
-                        }[description.type_code]
-                    elif type(value) == datetime:
-                        dtypes[col] = np.dtype("datetime64")
-                    else:
-                        dtypes[col] = np.array(value).dtype
+            for col, value, description in zip(
+                cols, first_row, results.cursor.description
+            ):
+                # FIXME: This is fraaaagile, and depends on internal, undocumented behaviour from SQLAlchemy
+                if value is None and description[1]:
+                    # the value is NULL... try to use the typecode
+                    dtypes[col] = {
+                        700: np.dtype("float64"),
+                        701: np.dtype("float64"),
+                        1114: np.dtype("datetime64"),
+                    }[description[1]]
+                elif type(value) == datetime:
+                    dtypes[col] = np.dtype("datetime64")
+                else:
+                    dtypes[col] = np.array(value).dtype
 
         # create the dataset, adding attributes from the config file
         attrs = config.get("dataset", {}).copy()
