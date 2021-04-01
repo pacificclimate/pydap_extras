@@ -95,9 +95,9 @@ class SQLHandler(BaseHandler):
 
         # open the YAML file and parse configuration
         try:
-            with open(filepath, "Ur") as fp:
-                fp = open(filepath, "Ur")
-                config = yaml.load(fp)
+            with open(filepath, "r") as fp:
+                fp = open(filepath, "r")
+                config = yaml.safe_load(fp)
         except Exception as exc:
             raise OpenFileError(f"Unable to open file {filepath}: {exc}")
 

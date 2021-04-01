@@ -88,7 +88,7 @@ class CSVHandler(BaseHandler):
         BaseHandler.__init__(self)
 
         try:
-            with open(filepath, "Ur") as fp:
+            with open(filepath, "r") as fp:
                 reader = csv.reader(fp, quoting=csv.QUOTE_NONNUMERIC)
                 vars = next(reader)
         except Exception as exc:
@@ -212,7 +212,7 @@ class CSVData(IterData):
     def stream(self):
         """Generator that yield lines of the file."""
         try:
-            fp = open(self.filepath, "Ur")
+            fp = open(self.filepath, "r")
         except Exception as exc:
             raise OpenFileError(f"Unable to open file {self.filepath}: {exc}")
 
