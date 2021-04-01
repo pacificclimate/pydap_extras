@@ -44,7 +44,7 @@ from email.utils import formatdate
 import operator
 from contextlib import contextmanager
 
-from sqlalchemy import create_engine, MetaData, schema
+from sqlalchemy import create_engine
 from sqlalchemy.orm import sessionmaker
 import yaml
 import numpy as np

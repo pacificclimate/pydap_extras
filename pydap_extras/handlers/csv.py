@@ -6,9 +6,8 @@ import copy
 from stat import ST_MTIME
 from email.utils import formatdate
 
-from pydap.handlers.lib import BaseHandler, IterData, build_filter
+from pydap.handlers.lib import BaseHandler, IterData
 from pydap.model import *
-from pydap.lib import quote
 from pydap.exceptions import OpenFileError
 
 

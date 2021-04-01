@@ -1,8 +1,6 @@
 import click
-import importlib
 from paste.httpserver import serve
 from pydap.wsgi.ssf import ServerSideFunctions
-from pydap_extras.handlers import csv, sql
 
 
 @click.command()
