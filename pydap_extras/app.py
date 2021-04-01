@@ -1,19 +1,26 @@
-import sys
+import click
+import importlib
 from paste.httpserver import serve
 from pydap.wsgi.ssf import ServerSideFunctions
 from pydap_extras.handlers import csv, sql
 
-if __name__ == "__main__":
-    handler_type = sys.argv[1]
 
-    if handler_type == "csv":
-        csv._test()
-        application = csv.CSVHandler(sys.argv[2])
-    elif handler_type == "sql":
-        sql._test()
-        application = sql.CSVHandler(sys.argv[2])
-    else:
-        raise KeyError(f"No handler called {handler_type}")
+@click.command()
+@click.option("-h", "--handler-type")
+@click.option("-f", "--filename")
+@click.option("-p", "--port", default=8001)
+def run_handler(handler_type, filename, port):
+    module = f"pydap_extras.handlers.{handler_type}"
+    _test = getattr(__import__(module, fromlist=["_test"]), "_test")
 
+    handler_name = f"{handler_type.upper()}Handler"
+    Handler = getattr(__import__(module, fromlist=[handler_name]), handler_name)
+
+    _test()
+    application = Handler(filename)
     application = ServerSideFunctions(application)
-    serve(application, port=8001)
+    serve(application, port=port)
+
+
+if __name__ == "__main__":
+    run_handler()

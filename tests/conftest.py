@@ -29,8 +29,8 @@ def simple_data_file(tmpdir_factory, simple_data):
 
 @pytest.fixture
 def testconfig(testdb, request):
-    config = """database:
-  dsn: "sqlite:///{0}"
+    config = f"""database:
+  dsn: "sqlite:///{testdb}"
   id: "mytable"
   table: "mytable"
 
@@ -44,9 +44,7 @@ sequence:
 foo:
   col: "foo"
   type: Integer
-""".format(
-        testdb
-    )
+"""
 
     with NamedTemporaryFile("w", delete=False) as myconfig:
         myconfig.write(config)
