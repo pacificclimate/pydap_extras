@@ -63,7 +63,7 @@ def dispatch(dataset):
 
     # 1D grids
     for grid in [g for g in walk(dataset, GridType) if len(g.shape) == 1]:
-        logger.debug("Grid {}".format(grid.name))
+        logger.debug(f"Grid {grid.name}")
         ws = wb.add_worksheet(grid.name)
 
         # headers
@@ -80,7 +80,7 @@ def dispatch(dataset):
 
     # sequences
     for seq in walk(dataset, SequenceType):
-        logger.debug("Sequence {}".format(seq.name))
+        logger.debug(f"Sequence {seq.name}")
 
         ws = wb.add_worksheet(seq.name)
 
@@ -97,7 +97,7 @@ def dispatch(dataset):
         n = 0
         j = len(seq.keys()) + 1
         for child in seq.children():
-            logger.debug("Child {}".format(child.name))
+            logger.debug(f"Child {child.name}")
             ws.merge_range(n, j, n, j + 1, child.name, format_)
             n = write_metadata(ws, child, n + 1, j, format_) + 1
 
@@ -122,21 +122,21 @@ def write_attr(ws, k, v, i, j, format_):
 
     if isinstance(v, dict):
         n = height(v)
-        ws.merge_range(i, j, i + n - 1, j, "{}".format(k), format_)
+        ws.merge_range(i, j, i + n - 1, j, f"{k}", format_)
 
         for kk, vv in v.items():
             n = height(vv)
             write_attr(ws, kk, vv, i, j + 1, format_)
             i += n
     else:
-        ws.write(i, j, "{}".format(k), format_)
+        ws.write(i, j, f"{k}", format_)
 
         try:
             if len(v) == 1:
                 v = v[0]
         except:
             pass
-        ws.write(i, j + 1, "{}".format(v))
+        ws.write(i, j + 1, f"{v}")
 
 
 def height(v):
