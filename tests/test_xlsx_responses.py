@@ -24,3 +24,5 @@ def test_XLSXResponse(simple_data_file):
             "application/vnd.openxmlformats-officedocument.spreadsheetml.sheet",
         ),
     ]
+
+    assert type(response.__iter__().read()) == bytes
