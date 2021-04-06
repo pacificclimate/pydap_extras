@@ -4,25 +4,31 @@ import os
 from datetime import datetime
 from collections import namedtuple
 from tempfile import NamedTemporaryFile
-
 from pkg_resources import resource_filename
-
-import numpy.random
-import h5py
-from pydap_extras.handlers.hdf5 import Hdf5Data
-
-import pycds
-from pycds import *
-from pydap_extras.handlers.pcic import RawPcicSqlHandler
 
 import testing.postgresql
 from pycds.util import *
 from sqlalchemy import create_engine
-
 from sqlalchemy.orm import sessionmaker
 from sqlalchemy.schema import CreateSchema
 
+import h5py
+import pycds
+import numpy as np
+from pycds import *
+from netCDF4 import Dataset
+from pydap_extras.handlers.pcic import RawPcicSqlHandler
+from pydap.handlers.netcdf import NetCDFHandler
+from pydap_extras.handlers.hdf5 import Hdf5Data
+
+
 TestNetwork = namedtuple("TestNetwork", "name long_name color")
+
+
+@pytest.fixture
+def handler():
+    fname = resource_filename("tests", "data/tiny_bccaq2_wo_recvars.nc")
+    return NetCDFHandler(fname)
 
 
 @pytest.fixture(scope="session")
@@ -397,7 +403,7 @@ def hdf5_dst(request):
     hf = h5py.File(f, "w", driver="fileobj", backing_store=False)
     group = hf.create_group("foo")
     dst = group.create_dataset("bar", (10, 10, 10), "=f8", maxshape=(None, 10, 10))
-    dst[:, :, :] = numpy.random.rand(10, 10, 10)
+    dst[:, :, :] = np.random.rand(10, 10, 10)
 
     def fin():
         hf.close()

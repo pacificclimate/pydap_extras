@@ -6,7 +6,7 @@ setup(
     name="pydap_extras",
     version=".".join(str(d) for d in __version__),
     description="PCIC Pydap handlers and Responses for Python 3",
-    install_requires=["pydap", "requests", "SQLAlchemy", "PyYAML"],
+    install_requires=["pydap", "requests", "SQLAlchemy", "PyYAML", "XlsxWriter"],
     packages=find_packages(),
     zip_safe=True,
     classifiers=[

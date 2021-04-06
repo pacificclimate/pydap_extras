@@ -14,18 +14,21 @@ from pupynere import netcdf_file, nc_generator
 
 logger = logging.getLogger(__name__)
 
+
 class NCResponse(BaseResponse):
     def __init__(self, dataset):
         BaseResponse.__init__(self, dataset)
 
         self.nc = netcdf_file(None, version=2)
-        if 'NC_GLOBAL' in self.dataset.attributes:
-            self.nc._attributes.update(self.dataset.attributes['NC_GLOBAL'])
+        if "NC_GLOBAL" in self.dataset.attributes:
+            self.nc._attributes.update(self.dataset.attributes["NC_GLOBAL"])
 
-        dimensions = [var.dimensions for var in walk(self.dataset) if isinstance(var, BaseType)]
-        dimensions = set(reduce(lambda x, y: x+y, dimensions))
+        dimensions = [
+            var.dimensions for var in walk(self.dataset) if isinstance(var, BaseType)
+        ]
+        dimensions = set(reduce(lambda x, y: x + y, dimensions))
         try:
-            unlim_dim = self.dataset.attributes['DODS_EXTRA']['Unlimited_Dimension']
+            unlim_dim = self.dataset.attributes["DODS_EXTRA"]["Unlimited_Dimension"]
         except:
             unlim_dim = None
 
@@ -44,11 +47,18 @@ class NCResponse(BaseResponse):
                 var = grid[dim]
 
                 # and add dimension variable
-                self.nc.createVariable(dim, var.dtype.char, (dim,), attributes=var.attributes)
+                self.nc.createVariable(
+                    dim, var.dtype.char, (dim,), attributes=var.attributes
+                )
 
             # finally add the grid variable itself
             base_var = grid[grid.name]
-            var = self.nc.createVariable(base_var.name, base_var.dtype.char, base_var.dimensions, attributes=base_var.attributes)
+            var = self.nc.createVariable(
+                base_var.name,
+                base_var.dtype.char,
+                base_var.dimensions,
+                attributes=base_var.attributes,
+            )
 
         # Sequence types!
         for seq in walk(dataset, SequenceType):
@@ -60,27 +70,29 @@ class NCResponse(BaseResponse):
                 # FIXME: materializing and iterating through a sequence to find the length
                 # could have performance problems and could potentially consume the iterable
                 # Do lots of testing here and determine the result of not calling set_numrecs()
-                n = len( [ x for x in seq[seq.keys()[0]] ])
+                n = len([x for x in seq[seq.keys()[0]]])
             self.nc.set_numrecs(n)
 
-            dim = seq.name,
+            dim = (seq.name,)
 
             for child in seq.children():
                 dtype = child.dtype
                 # netcdf does not have a date type, so remap to float
-                if dtype == np.dtype('datetime64'):
-                    dtype = np.dtype('float32')
-                elif dtype == np.dtype('object'):
-                    raise TypeError("Don't know how to handle numpy type {0}".format(dtype))
-                        
-                var = self.nc.createVariable(child.name, dtype.char, dim, attributes=child.attributes)
+                if dtype == np.dtype("datetime64"):
+                    dtype = np.dtype("float32")
+                elif dtype == np.dtype("object"):
+                    raise TypeError(
+                        "Don't know how to handle numpy type {0}".format(dtype)
+                    )
 
-        self.headers.extend([
-            ('Content-type', 'application/x-netcdf')
-        ])
+                var = self.nc.createVariable(
+                    child.name, dtype.char, dim, attributes=child.attributes
+                )
+
+        self.headers.extend([("Content-type", "application/x-netcdf")])
         # Optionally set the filesize header if possible
         try:
-            self.headers.extend([('Content-length', str(self.nc.filesize))])
+            self.headers.extend([("Content-length", str(self.nc.filesize))])
         except ValueError:
             pass
 
@@ -103,13 +115,15 @@ class NCResponse(BaseResponse):
                 if isinstance(value, (type(None), str, int, float, bool, datetime)):
                     # special case datetimes, since dates aren't supported by NetCDF3
                     if type(value) == datetime:
-                        since_epoch = (value - epoch).total_seconds() 
-                        yield np.array(since_epoch / 3600. / 24., dtype='Float32') # days since epoch
+                        since_epoch = (value - epoch).total_seconds()
+                        yield np.array(
+                            since_epoch / 3600.0 / 24.0, dtype="Float32"
+                        )  # days since epoch
                     else:
                         yield np.array(value)
                 else:
                     yield value
-            
+
         def nonrecord_input():
             for varname in nc.non_recvars.keys():
                 logger.debug("Iterator for %s", varname)
@@ -126,23 +140,26 @@ class NCResponse(BaseResponse):
 
         # Create a generator for the record variables
         recvars = nc.recvars.keys()
+
         def record_generator(nc, dst, table):
             logger.debug("record_generator() for dataset %s", dst)
             if not nc.recvars:
                 logger.debug("file has no record variables")
                 return
-            vars = [ iter(get_var(dst, table[varname])) for varname in nc.recvars.keys() ]
+            vars = [iter(get_var(dst, table[varname])) for varname in nc.recvars.keys()]
             while True:
                 for var in vars:
                     try:
                         yield var.next()
                     except StopIteration:
                         raise
-                    
+
         more_input = type_generator(record_generator(nc, self.dataset, var2id))
 
         # Create a single pipeline which includes the non-record and record variables
-        pipeline = nc_generator(nc, chain(type_generator(nonrecord_input()), more_input))
+        pipeline = nc_generator(
+            nc, chain(type_generator(nonrecord_input()), more_input)
+        )
 
         # Generate the netcdf stream
         for block in pipeline:
