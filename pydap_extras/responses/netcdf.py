@@ -1,16 +1,17 @@
 import time
 
-from itertools import chain, ifilter
+from itertools import chain
 from collections import Iterator
 import logging
 from datetime import datetime
+from functools import reduce
 
 import numpy as np
 from numpy.compat import asbytes
 from pydap.model import *
 from pydap.lib import walk, get_var
 from pydap.responses.lib import BaseResponse
-from pupynere import netcdf_file, nc_generator
+from pydap_extras.pupynere import netcdf_file, nc_generator
 
 logger = logging.getLogger(__name__)
 
@@ -70,7 +71,7 @@ class NCResponse(BaseResponse):
                 # FIXME: materializing and iterating through a sequence to find the length
                 # could have performance problems and could potentially consume the iterable
                 # Do lots of testing here and determine the result of not calling set_numrecs()
-                n = len([x for x in seq[seq.keys()[0]]])
+                n = len([x for x in seq[next(seq.keys())]])
             self.nc.set_numrecs(n)
 
             dim = (seq.name,)
