@@ -61,8 +61,8 @@ foo:
 def testdb(request):
     with NamedTemporaryFile("w", delete=False) as f:
         engine = create_engine("sqlite:///" + f.name, echo=True)
-        engine.execute("CREATE TABLE mytable (foo INTEGER);")
-        engine.execute("INSERT INTO mytable VALUES (1);")
+        engine.execute("CREATE TABLE mytable (foo INTEGER, bar VARCHAR(50));")
+        engine.execute("INSERT INTO mytable (foo, bar) VALUES (1, 'hello world');")
         fname = f.name
 
     def fin():

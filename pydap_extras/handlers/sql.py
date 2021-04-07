@@ -271,8 +271,9 @@ class SQLData(CSVData):
 
     @property
     def dtype(self):
-        peek = next(iter(self))
-        return np.array(peek).dtype
+        return np.dtype(
+            {"names": list(self.dtypes.keys()), "formats": list(self.dtypes.values())}
+        )
 
     @property
     def query(self):
