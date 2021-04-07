@@ -4,8 +4,13 @@ from pydap.wsgi.ssf import ServerSideFunctions
 
 
 @click.command()
-@click.option("-h", "--handler-type")
-@click.option("-f", "--filename")
+@click.option(
+    "-h",
+    "--handler-type",
+    help="Convert between the handler-type format and the data model used by Pydap",
+    type=click.Choice(["sql", "csv"]),
+)
+@click.option("-f", "--filename", help="File containing data to pass to the handler")
 @click.option("-p", "--port", default=8001)
 def run_handler(handler_type, filename, port):
     module = f"pydap_extras.handlers.{handler_type}"
