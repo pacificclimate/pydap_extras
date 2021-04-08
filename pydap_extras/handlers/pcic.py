@@ -17,7 +17,7 @@ from paste.httpexceptions import HTTPNotFound
 from geoalchemy2.functions import ST_X, ST_Y
 
 from pydap.wsgi.app import DapServer
-from pydap.handlers.sql import SQLHandler, Engines
+from pydap_extras.handlers.sql import SQLHandler, Engines
 from pycds import *
 
 logger = logging.getLogger(__name__)
@@ -66,8 +66,8 @@ class PcicSqlHandler(object):
         try:
             with self.session_scope_factory() as sesh:
                 s = self.create_ini(sesh, net_name, native_id)
-        except ValueError, e:
-            return HTTPNotFound(e.message)(environ, start_response) # 404  
+        except ValueError as e:
+            return HTTPNotFound(e)(environ, start_response) # 404  
         f = NamedTemporaryFile('w', suffix=self.suffix, delete=False)
         f.write(s)
         f.close()

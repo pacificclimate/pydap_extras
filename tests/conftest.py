@@ -1,9 +1,22 @@
-import pytest
 import csv
 import os
+from datetime import datetime
+from collections import namedtuple
 from tempfile import NamedTemporaryFile
-from sqlalchemy import create_engine
 
+import pytest
+import pycds
+from pycds import *
+from pydap_extras.handlers.pcic import RawPcicSqlHandler
+
+import testing.postgresql
+from pycds.util import *
+from sqlalchemy.ext.declarative import declarative_base, DeferredReflection
+from sqlalchemy import Column, Integer, ForeignKey, String, DateTime, Float, create_engine, event, not_, and_
+from sqlalchemy.orm import sessionmaker
+from sqlalchemy.schema import DDL, CreateSchema
+
+TestNetwork = namedtuple('TestNetwork', 'name long_name color')
 
 @pytest.fixture(scope="session")
 def simple_data():
@@ -143,7 +156,6 @@ def test_session(blank_postgis_session):
 
     engine = blank_postgis_session.get_bind()
     pycds.Base.metadata.create_all(bind=engine)
-    pycds.DeferredBase.metadata.create_all(bind=engine)
 
     # Make sure spatial extensions are loaded for each connection, not just the current session
     # https://groups.google.com/d/msg/sqlalchemy/eDpJ-yZEnqU/_XJ4Pmd712QJ
@@ -303,3 +315,119 @@ def raw_handler(monkeypatch, conn_params, test_session):
     monkeypatch.setattr(RawPcicSqlHandler, 'get_full_query', my_get_full_query)
 
     return handler
+
+
+# http://stackoverflow.com/questions/5631078/sqlalchemy-print-the-actual-query
+def compile_query(statement, bind=None):
+    """
+    print a query, with values filled in
+    for debugging purposes *only*
+    for security, you should always separate queries from their values
+    please also note that this function is quite slow
+    """
+    import sqlalchemy.orm
+    if isinstance(statement, sqlalchemy.orm.Query):
+        if bind is None:
+            bind = statement.session.get_bind(
+                statement.column_descriptions
+            )
+            statement = statement.statement
+        elif bind is None:
+            bind = statement.bind
+
+        dialect = bind.dialect
+        compiler = statement._compiler(dialect)
+
+        class LiteralCompiler(compiler.__class__):
+
+            def visit_bindparam(
+                    self, bindparam, within_columns_clause=False,
+                    literal_binds=False, **kwargs
+            ):
+                return super(LiteralCompiler, self).render_literal_bindparam(
+                    bindparam, within_columns_clause=within_columns_clause,
+                    literal_binds=literal_binds, **kwargs
+                )
+
+    compiler = LiteralCompiler(dialect, statement)
+    return compiler.process(statement)
+
+
+def orm_station_table(sesh, stn_id, raw=True):
+    '''Construct a 'station table' i.e. a table such that each row
+       corresponds to a single timestep and each column corresponds to
+       a separate variable or flag
+       :param sesh: sqlalchemy session
+       :param stn_id: id corresponding to meta_station.station_id or Station.id
+       :type stn_id: int
+       :param raw: Should this query be for raw observations? Setting this to False will fetch climatologies.
+       :type raw: bool
+       :rtype: :py:class:`sqlalchemy.orm.query.Query`
+    '''
+    if raw:
+        raw_filter = not_(and_(ObsWithFlags.cell_method.like(
+            '%within%'), ObsWithFlags.cell_method.like('%over%')))
+    else:
+        raw_filter = or_(ObsWithFlags.cell_method.like(
+            '%within%'), ObsWithFlags.cell_method.like('%over%'))
+
+    # Get all of the variables for which observations exist
+    # and iterate over them
+    vars_ = sesh.query(ObsWithFlags.vars_id, ObsWithFlags.net_var_name)\
+        .filter(ObsWithFlags.station_id == stn_id).filter(raw_filter)\
+        .distinct().order_by(ObsWithFlags.vars_id)
+
+    # Start with all of the times for which observations exist
+    # and then use this as a basis for a left join
+    # (sqlite doesn't support full outer joins
+    times = sesh.query(ObsWithFlags.obs_time.label('flag_time'))\
+        .filter(ObsWithFlags.station_id == stn_id)\
+        .order_by(ObsWithFlags.obs_time).distinct()
+    stmt = times.subquery()
+
+    for vars_id, var_name in vars_.all():
+
+        # Construct a query for all values of this variable
+        right = sesh.query(
+            ObsWithFlags.obs_time.label('obs_time'),
+            ObsWithFlags.datum.label(var_name),
+            ObsWithFlags.flag_name.label(var_name + '_flag')
+        ).filter(ObsWithFlags.vars_id == vars_id)\
+            .filter(ObsWithFlags.station_id == stn_id).subquery()
+
+        # Then join it to the query we're already building
+        join_query = sesh.query(stmt, right).outerjoin(
+            right, stmt.c.obs_time == right.c.obs_time)
+
+        stmt = join_query.subquery()
+
+    return sesh.query(stmt)
+
+
+def sql_station_table(sesh, stn_id):
+    return compile_query(orm_station_table(sesh, stn_id))
+
+
+class ObsWithFlags(Base):
+    '''This class maps to a convenience view that is used to construct a
+    table of flagged observations; i.e. one row per observation with
+    additional columns for each attached flag.
+    '''
+    __tablename__ = 'obs_with_flags'
+    vars_id = Column(Integer, ForeignKey('meta_vars.vars_id'))
+    network_id = Column(Integer, ForeignKey('meta_network.network_id'))
+    unit = Column(String)
+    standard_name = Column(String)
+    cell_method = Column(String)
+    net_var_name = Column(String)
+    obs_raw_id = Column(Integer, ForeignKey(
+        'obs_raw.obs_raw_id'), primary_key=True)
+    station_id = Column(Integer, ForeignKey('meta_station.station_id'))
+    obs_time = Column(DateTime)
+    mod_time = Column(DateTime)
+    datum = Column(Float)
+    native_flag_id = Column(Integer, ForeignKey(
+        'meta_native_flag.native_flag_id'))
+    flag_name = Column(String)
+    description = Column(String)
+    flag_value = Column(String)
