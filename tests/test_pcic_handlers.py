@@ -104,13 +104,13 @@ def test_404s(raw_handler, url):
 
 
 @pytest.mark.poor_unittest
-def test_returns_content(raw_handler_get_vars_patch, monkeypatch):
+def test_returns_content(raw_handler_get_vars_mock, monkeypatch):
     """This is not a good 'unit' test in that it relies on some intergration with Pydap
     Unfortunately this is the case... this whole _package_ relies heavily on Pydap!
     """
     url = "/MoE/masset.rsql.das"
     req = Request.blank(url)
-    resp = req.get_response(raw_handler_get_vars_patch)
+    resp = req.get_response(raw_handler_get_vars_mock)
     assert resp.status == "200 OK"
 
     s = """Attributes {
