@@ -372,7 +372,7 @@ def raw_handler(monkeypatch, test_db_with_met_obs):
 
 
 @pytest.fixture(scope="function")
-def raw_handler_get_vars_patch(monkeypatch, test_db_with_met_obs):
+def raw_handler_get_vars_mock(monkeypatch, test_db_with_met_obs):
     conn_params = test_db_with_met_obs.get_bind()
     handler = RawPcicSqlHandler(conn_params, test_db_with_met_obs)
 
