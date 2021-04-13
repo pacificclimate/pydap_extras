@@ -177,8 +177,8 @@ def test_create_ini_with_multiple_hist_ids(
         """station_id: "some_station"
     station_name: "The same station"
     network: "test_network"
-    latitude: 49.000000
-    longitude: -118.000000"""
+    latitude: 49.0
+    longitude: -118.0"""
         in s
     )
 
