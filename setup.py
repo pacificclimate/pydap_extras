@@ -1,4 +1,4 @@
-from setuptools import setup
+from setuptools import setup, find_packages
 
 __version__ = (0, 1, 0)
 
@@ -7,7 +7,7 @@ setup(
     version=".".join(str(d) for d in __version__),
     description="PCIC Pydap handlers and Responses for Python 3",
     install_requires=["pydap", "requests", "SQLAlchemy", "PyYAML"],
-    packages=["pydap_extras"],
+    packages=find_packages(),
     zip_safe=True,
     classifiers=[
         "Development Status :: 3 - Alpha",
