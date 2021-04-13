@@ -161,23 +161,22 @@ class PcicSqlHandler(object):
         dsn = self.dsn
         full_query = full_query.replace('"', '\\"')
 
-        s = (
-            """database:
-  dsn: "%(dsn)s"
+        s = f"""database:
+  dsn: "{dsn}"
   id: "obs_time"
-  table: "(%(full_query)s) as foo"
+  table: "({full_query}) as foo"
 dataset:
   NC_GLOBAL:
-    name: "CRMP/%(network)s"
+    name: "CRMP/{network}"
     owner: "PCIC"
     contact: "Faron Anslow <fanslow@uvic.ca>"
     version: 0.2
-    station_id: "%(native_id)s"
-    station_name: "%(station_name)s"
-    network: "%(network)s"
-    latitude: %(lat)f
-    longitude: %(lon)f
-    elevation: %(elevation)f
+    station_id: "{native_id}"
+    station_name: "{station_name}"
+    network: "{network}"
+    latitude: {lat}
+    longitude: {lon}
+    elevation: {elevation}
     history: "Created dynamically by the Pydap SQL handler, the Pydap PCIC SQL handler, and the PCIC/CRMP database"
 sequence:
   name: "station_observations"
@@ -189,8 +188,6 @@ time:
   units: "days since 1970-01-01"
   type: Float64
 """
-            % locals()
-        )
 
         stn_vars = self.get_vars(station_id, sesh)
 
@@ -204,19 +201,18 @@ time:
         ) in stn_vars:
             s = (
                 s
-                + """%(var_name)s:
-  name: "%(var_name)s"
-  display_name: "%(display_name)s"
-  long_name: "%(long_description)s"
-  standard_name: "%(standard_name)s"
-  units: "%(unit)s"
-  cell_method: "%(cell_method)s"
-  col: "%(var_name)s"
+                + f"""{var_name}:
+  name: "{var_name}"
+  display_name: "{display_name}"
+  long_name: "{long_description}"
+  standard_name: "{standard_name}"
+  units: "{unit}"
+  cell_method: "{cell_method}"
+  col: "{var_name}"
   axis: "Y"
   missing_value: -9999
   type: Float64
 """
-                % locals()
             )
 
         return str(s)
