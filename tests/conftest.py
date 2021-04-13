@@ -105,18 +105,6 @@ def engine():
         engine.execute("create extension postgis")
         engine.execute(CreateSchema("crmp"))
         pycds.Base.metadata.create_all(bind=engine)
-        # sqlalchemy.event.listen(
-        #     pycds.weather_anomaly.Base.metadata,
-        #     'before_create',
-        #     DDL('''
-        #         CREATE OR REPLACE FUNCTION crmp.DaysInMonth(date) RETURNS double precision AS
-        #         $$
-        #             SELECT EXTRACT(DAY FROM CAST(date_trunc('month', $1) + interval '1 month' - interval '1 day'
-        #             as timestamp));
-        #         $$ LANGUAGE sql;
-        #     ''')
-        # )
-        # pycds.weather_anomaly.Base.metadata.create_all(bind=engine)
         yield engine
 
 
@@ -127,7 +115,6 @@ def session(engine):
     # Default search path is `"$user", public`. Need to reset that to search crmp (for our db/orm content) and
     # public (for postgis functions)
     session.execute("SET search_path TO crmp, public")
-    # print('\nsearch_path', [r for r in session.execute('SHOW search_path')])
     yield session
     session.rollback()
     session.close()
@@ -168,13 +155,6 @@ def test_session(blank_postgis_session):
 
     engine = blank_postgis_session.get_bind()
     pycds.Base.metadata.create_all(bind=engine)
-
-    # Make sure spatial extensions are loaded for each connection, not just the current session
-    # https://groups.google.com/d/msg/sqlalchemy/eDpJ-yZEnqU/_XJ4Pmd712QJ
-    @event.listens_for(engine, "connect")
-    def connect(dbapi_connection, connection_rec):
-        dbapi_connection.enable_load_extension(True)
-        dbapi_connection.execute("select load_extension('mod_spatialite')")
 
     yield blank_postgis_session
 
