@@ -20,6 +20,9 @@ jobs:
       env:
         PIP_INDEX_URL: https://pypi.pacificclimate.org/simple
       run: |
+        sudo apt-get update
+        sudo apt purge postgresql-client-13 postgresql-server-dev-13
+        sudo apt-get install postgresql-plpython3-12 postgresql-12-postgis-3
         pip install -U pip
         pip install -r requirements.txt -r test_requirements.txt
         pip install -e .

@@ -21,5 +21,7 @@ setup(
     entry_points="""[pydap_extras.handlers]
                 sql = pydap_extras.handlers.sql:SQLHandler
                 csv = pydap_extras.handlers.csv:CSVHandler
+                rsql = pydap_extras.handlers.pcic:RawPcicSqlHandler
+                csql = pydap.handlers.pcic:ClimoPcicSqlHandler
                 """,
 )
