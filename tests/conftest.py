@@ -376,7 +376,7 @@ def raw_handler_get_vars_mock(monkeypatch, test_db_with_met_obs):
     return handler
 
 
-test_h5 = resource_filename('pydap.handlers.hdf5', 'data/test.h5')
+test_h5 = resource_filename('tests', 'data/test.h5')
 
 @pytest.fixture(scope="function", params=['/tasmax', '/tasmin', '/pr'])
 def hdf5data_instance_3d(request):

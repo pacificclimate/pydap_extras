@@ -3,7 +3,7 @@ import re
 import time
 from stat import ST_MTIME
 from email.utils import formatdate
-from itertools import islice, imap
+from itertools import islice
 import logging
 
 import h5py
@@ -25,7 +25,7 @@ class HDF5Handler(BaseHandler):
 
         try:
             self.fp = h5py.File(filepath, 'r')
-        except Exception, exc:
+        except Exception as exc:
             message = 'Unable to open file %s: %s' % (filepath, exc)
             raise OpenFileError(message)
 
