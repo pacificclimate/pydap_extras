@@ -239,7 +239,7 @@ class Hdf5Data(object):
             if self._minor_slices:
                 # Can't actually index with sequence of stackable slices... convert to slices
                 minor_slices = [s.slice for s in self._minor_slices]
-                return x[minor_slices]
+                return x[tuple(minor_slices)]
             else:
                 return x
         else:

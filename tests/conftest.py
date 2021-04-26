@@ -146,7 +146,7 @@ def mod_empty_database_session(mod_blank_postgis_session):
     yield sesh
 
 
-@pytest.yield_fixture(scope="function")
+@pytest.fixture(scope="function")
 def blank_postgis_session():
     with testing.postgresql.Postgresql() as pg:
         engine = create_engine(pg.url())
