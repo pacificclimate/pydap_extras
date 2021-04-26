@@ -376,37 +376,45 @@ def raw_handler_get_vars_mock(monkeypatch, test_db_with_met_obs):
     return handler
 
 
-test_h5 = resource_filename('tests', 'data/test.h5')
+test_h5 = resource_filename("tests", "data/test.h5")
 
-@pytest.fixture(scope="function", params=['/tasmax', '/tasmin', '/pr'])
+
+@pytest.fixture(scope="function", params=["/tasmax", "/tasmin", "/pr"])
 def hdf5data_instance_3d(request):
-    f = h5py.File(test_h5, 'r')
+    f = h5py.File(test_h5, "r")
     dst = f[request.param]
     return Hdf5Data(dst)
 
-@pytest.fixture(scope="module", params=['/lat', '/lon', '/time'])
+
+@pytest.fixture(scope="module", params=["/lat", "/lon", "/time"])
 def hdf5data_instance_1d(request):
-    f = h5py.File(test_h5, 'r')
+    f = h5py.File(test_h5, "r")
     dst = f[request.param]
     return Hdf5Data(dst)
+
 
 # _All_ the variables should be iterable
-@pytest.fixture(scope="module", params=['/tasmax', '/tasmin', '/pr', '/lat', '/lon', '/time'])
+@pytest.fixture(
+    scope="module", params=["/tasmax", "/tasmin", "/pr", "/lat", "/lon", "/time"]
+)
 def hdf5data_iterable(request):
-    f = h5py.File(test_h5, 'r')
+    f = h5py.File(test_h5, "r")
     dst = f[request.param]
     return Hdf5Data(dst)
+
 
 @pytest.fixture(scope="function")
 def hdf5_dst(request):
     f = NamedTemporaryFile()
-    hf = h5py.File(f.name, driver='core', backing_store=False)
-    group = hf.create_group('foo')
-    dst = group.create_dataset('bar', (10, 10, 10), '=f8', maxshape=(None, 10, 10))
-    dst[:,:,:] = numpy.random.rand(10, 10, 10)
+    hf = h5py.File(f, "w", driver="fileobj", backing_store=False)
+    group = hf.create_group("foo")
+    dst = group.create_dataset("bar", (10, 10, 10), "=f8", maxshape=(None, 10, 10))
+    dst[:, :, :] = numpy.random.rand(10, 10, 10)
 
     def fin():
         hf.close()
         os.remove(f.name)
+
     request.addfinalizer(fin)
-    
+
+    return dst
