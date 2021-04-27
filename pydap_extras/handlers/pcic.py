@@ -5,7 +5,6 @@ Each dataset will contain a variety of global attributes such as the station and
 """
 
 import os
-import sys
 import re
 from tempfile import NamedTemporaryFile
 from contextlib import contextmanager
@@ -16,7 +15,6 @@ from sqlalchemy.orm import sessionmaker
 from paste.httpexceptions import HTTPNotFound
 from geoalchemy2.functions import ST_X, ST_Y
 
-from pydap.wsgi.app import DapServer
 from pydap_extras.handlers.sql import SQLHandler, Engines
 from pycds import *
 

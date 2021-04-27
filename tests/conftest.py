@@ -1,31 +1,26 @@
+import pytest
 import csv
 import os
 from datetime import datetime
 from collections import namedtuple
 from tempfile import NamedTemporaryFile
 
-import pytest
+from pkg_resources import resource_filename
+
+import numpy.random
+import h5py
+from pydap_extras.handlers.hdf5 import Hdf5Data
+
 import pycds
 from pycds import *
 from pydap_extras.handlers.pcic import RawPcicSqlHandler
 
 import testing.postgresql
 from pycds.util import *
-from sqlalchemy.ext.declarative import declarative_base, DeferredReflection
-from sqlalchemy import (
-    Column,
-    Integer,
-    ForeignKey,
-    String,
-    DateTime,
-    Float,
-    create_engine,
-    event,
-    not_,
-    and_,
-)
+from sqlalchemy import create_engine
+
 from sqlalchemy.orm import sessionmaker
-from sqlalchemy.schema import DDL, CreateSchema
+from sqlalchemy.schema import CreateSchema
 
 TestNetwork = namedtuple("TestNetwork", "name long_name color")
 
@@ -139,7 +134,7 @@ def mod_empty_database_session(mod_blank_postgis_session):
     yield sesh
 
 
-@pytest.yield_fixture(scope="function")
+@pytest.fixture(scope="function")
 def blank_postgis_session():
     with testing.postgresql.Postgresql() as pg:
         engine = create_engine(pg.url())
@@ -367,3 +362,47 @@ def raw_handler_get_vars_mock(monkeypatch, test_db_with_met_obs):
     monkeypatch.setattr(RawPcicSqlHandler, "get_vars", my_get_vars)
 
     return handler
+
+
+test_h5 = resource_filename("tests", "data/test.h5")
+
+
+@pytest.fixture(scope="function", params=["/tasmax", "/tasmin", "/pr"])
+def hdf5data_instance_3d(request):
+    f = h5py.File(test_h5, "r")
+    dst = f[request.param]
+    return Hdf5Data(dst)
+
+
+@pytest.fixture(scope="module", params=["/lat", "/lon", "/time"])
+def hdf5data_instance_1d(request):
+    f = h5py.File(test_h5, "r")
+    dst = f[request.param]
+    return Hdf5Data(dst)
+
+
+# _All_ the variables should be iterable
+@pytest.fixture(
+    scope="module", params=["/tasmax", "/tasmin", "/pr", "/lat", "/lon", "/time"]
+)
+def hdf5data_iterable(request):
+    f = h5py.File(test_h5, "r")
+    dst = f[request.param]
+    return Hdf5Data(dst)
+
+
+@pytest.fixture(scope="function")
+def hdf5_dst(request):
+    f = NamedTemporaryFile()
+    hf = h5py.File(f, "w", driver="fileobj", backing_store=False)
+    group = hf.create_group("foo")
+    dst = group.create_dataset("bar", (10, 10, 10), "=f8", maxshape=(None, 10, 10))
+    dst[:, :, :] = numpy.random.rand(10, 10, 10)
+
+    def fin():
+        hf.close()
+        os.remove(f.name)
+
+    request.addfinalizer(fin)
+
+    return dst
