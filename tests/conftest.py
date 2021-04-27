@@ -17,8 +17,9 @@ import pycds
 import numpy as np
 from pycds import *
 from netCDF4 import Dataset
-from pydap_extras.handlers.pcic import RawPcicSqlHandler
+from pydap.model import DatasetType, BaseType, SequenceType
 from pydap.handlers.netcdf import NetCDFHandler
+from pydap_extras.handlers.pcic import RawPcicSqlHandler
 from pydap_extras.handlers.hdf5 import Hdf5Data
 
 
@@ -51,6 +52,30 @@ def simple_data_file(tmpdir_factory, simple_data):
         for row in simple_data:
             writer.writerow(row)
     return temp_file
+
+
+@pytest.fixture
+def simple_dataset():
+    dataset = DatasetType("VerySimpleSequence")
+    dataset["sequence"] = SequenceType("sequence")
+    dataset["sequence"]["byte"] = BaseType("byte")
+    dataset["sequence"]["int"] = BaseType("int")
+    dataset["sequence"]["float"] = BaseType("float")
+    dataset["sequence"].data = np.array(
+        [
+            (0, 1, 10.0),
+            (1, 2, 20.0),
+            (2, 3, 30.0),
+            (3, 4, 40.0),
+            (4, 5, 50.0),
+            (5, 6, 60.0),
+            (6, 7, 70.0),
+            (7, 8, 80.0),
+        ],
+        dtype=[("byte", np.byte), ("int", np.int32), ("float", np.float32)],
+    )
+
+    return dataset
 
 
 @pytest.fixture

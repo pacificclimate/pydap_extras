@@ -6,7 +6,14 @@ setup(
     name="pydap_extras",
     version=".".join(str(d) for d in __version__),
     description="PCIC Pydap handlers and Responses for Python 3",
-    install_requires=["pydap", "requests", "SQLAlchemy", "PyYAML", "XlsxWriter", "pupynere-pdp"],
+    install_requires=[
+        "pydap",
+        "requests",
+        "SQLAlchemy",
+        "PyYAML",
+        "XlsxWriter",
+        "pupynere-pdp",
+    ],
     packages=find_packages(),
     zip_safe=True,
     classifiers=[
@@ -18,10 +25,13 @@ setup(
         "Programming Language :: Python :: 3 :: Only",
         "Topic :: Scientific/Engineering :: Atmospheric Science",
     ],
-    entry_points="""[pydap_extras.handlers]
-                sql = pydap_extras.handlers.sql:SQLHandler
-                csv = pydap_extras.handlers.csv:CSVHandler
-                rsql = pydap_extras.handlers.pcic:RawPcicSqlHandler
-                csql = pydap.handlers.pcic:ClimoPcicSqlHandler
-                """,
+    entry_points="""[pydap.handlers]
+    sql = pydap_extras.handlers.sql:SQLHandler
+    csv = pydap_extras.handlers.csv:CSVHandler
+    rsql = pydap_extras.handlers.pcic:RawPcicSqlHandler
+    csql = pydap.handlers.pcic:ClimoPcicSqlHandler
+[pydap.response]
+    nc = pydap_extras.responses.netcdf:NCResponse
+    xlsx = pydap_extras.responses.xlsx:XLSXResponse
+""",
 )

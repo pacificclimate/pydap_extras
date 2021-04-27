@@ -11,7 +11,7 @@ from numpy.compat import asbytes
 from pydap.model import *
 from pydap.lib import walk, get_var
 from pydap.responses.lib import BaseResponse
-from pydap_extras.pupynere import netcdf_file, nc_generator
+from pupynere import netcdf_file, nc_generator
 
 logger = logging.getLogger(__name__)
 
@@ -93,7 +93,7 @@ class NCResponse(BaseResponse):
         self.headers.extend([("Content-type", "application/x-netcdf")])
         # Optionally set the filesize header if possible
         try:
-            self.headers.extend([("Content-length", str(self.nc.filesize))])
+            self.headers.extend([("Filesize", str(self.nc.filesize))])
         except ValueError:
             pass
 
@@ -151,9 +151,9 @@ class NCResponse(BaseResponse):
             while True:
                 for var in vars:
                     try:
-                        yield var.next()
+                        yield next(var)
                     except StopIteration:
-                        raise
+                        return
 
         more_input = type_generator(record_generator(nc, self.dataset, var2id))
 
