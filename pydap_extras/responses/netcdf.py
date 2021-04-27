@@ -83,7 +83,7 @@ class NCResponse(BaseResponse):
                     dtype = np.dtype("float32")
                 elif dtype == np.dtype("object"):
                     raise TypeError(
-                        "Don't know how to handle numpy type {0}".format(dtype)
+                        f"Don't know how to handle numpy type {dtype}"
                     )
 
                 var = self.nc.createVariable(
@@ -127,7 +127,7 @@ class NCResponse(BaseResponse):
 
         def nonrecord_input():
             for varname in nc.non_recvars.keys():
-                logger.debug("Iterator for %s", varname)
+                logger.debug(f"Iterator for {varname}")
                 dst_var = get_var(self.dataset, var2id[varname]).data
                 # skip 0-d variables
                 if not dst_var.shape:
@@ -135,7 +135,7 @@ class NCResponse(BaseResponse):
 
                 # Make sure that all elements of the list are iterators
                 for x in dst_var:
-                    logger.debug("nonrecord_input yielding %s from var %s", x, varname)
+                    logger.debug(f"nonrecord_input yielding {x} from var {varname}")
                     yield x
             logger.debug("Done with nonrecord input")
 
@@ -143,7 +143,7 @@ class NCResponse(BaseResponse):
         recvars = nc.recvars.keys()
 
         def record_generator(nc, dst, table):
-            logger.debug("record_generator() for dataset %s", dst)
+            logger.debug(f"record_generator() for dataset {dst}")
             if not nc.recvars:
                 logger.debug("file has no record variables")
                 return
