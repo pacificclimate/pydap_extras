@@ -6,10 +6,10 @@ class StackableSlice(object):
         self.slice = slice(*args)
 
     def __repr__(self):
-        return "StackableSlice({}, {}, {})".format(self.start, self.stop, self.step)
+        return f"StackableSlice({self.start}, {self.stop}, {self.step})"
 
     def __str__(self):
-        return "StackableSlice({}:{}:{})".format(self.start, self.stop, self.step)
+        return f"StackableSlice({self.start}, {self.stop}, {self.step})"
 
     def __add__(self, other):
         """other is either a StackableSlice or a slice"""

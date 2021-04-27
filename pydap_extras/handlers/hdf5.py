@@ -28,7 +28,7 @@ class HDF5Handler(BaseHandler):
         try:
             self.fp = h5py.File(filepath, "r")
         except Exception as exc:
-            message = "Unable to open file %s: %s" % (filepath, exc)
+            message = f"Unable to open file {filepath}: {exc}"
             raise OpenFileError(message)
 
         self.additional_headers.append(
@@ -83,7 +83,7 @@ class HDF5Handler(BaseHandler):
             elif is_gridded(h5):
                 parent = dataset[name] = GridType(name, attributes=attrs)
                 dims = tuple([d.values()[0].name.lstrip("/") for d in h5.dims])
-                logger.debug("DIMENSIONS: {}".format(dims))
+                logger.debug(f"DIMENSIONS: {dims}")
                 parent[name] = BaseType(
                     name, data=Hdf5Data(h5), dimensions=dims, attributes=attrs
                 )  # Add the main variable
@@ -146,7 +146,7 @@ class Hdf5Data(object):
         self.var = self.flat = var
         self.ndim = self.var.ndim
 
-        logger.debug("Hdf5Data.__init__({}, {})".format(var, slices))
+        logger.debug(f"Hdf5Data.__init__({var}, {slices})")
 
         rank = len(var.shape)
         assert rank > 0
@@ -175,7 +175,7 @@ class Hdf5Data(object):
             self.pos = 0
 
     def __getitem__(self, slices):
-        logger.debug("HDF5Data({}.__getitem({})".format(self.var, slices))
+        logger.debug(f"HDF5Data({self.var}.__getitem({slices})")
         # There are three types of acceptable keys...
         # A single integer
         if type(slices) == int:
@@ -188,9 +188,7 @@ class Hdf5Data(object):
         elif type(slices) in (tuple, list):
             if len(slices) != self.rank:
                 raise ValueError(
-                    "dataset has {0} dimensions, but the slice has {1} dimensions".format(
-                        len(slices), self.rank
-                    )
+                    f"dataset has {len(slices)} dimensions, but the slice has {self.rank} dimensions"
                 )
         else:
             raise TypeError()
@@ -256,14 +254,12 @@ class Hdf5Data(object):
     @property
     def shape(self):
         logger.debug(
-            "HDF5Data({}).shape : major_slice={} and slices={}".format(
-                self.var, self._major_slice, self._slices
-            )
+            f"HDF5Data({self.var}).shape : major_slice={self._major_slice} and slices={self._slices}"
         )
         myshape = self.var.shape
         true_slices = [s.slice for s in self._slices]
         myshape = sliced_shape(true_slices, myshape)
-        logger.debug("leaving shape with result %s", myshape)
+        logger.debug(f"leaving shape with result {myshape}")
         return myshape
 
     @property
