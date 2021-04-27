@@ -2,18 +2,13 @@ from setuptools import setup, find_packages
 
 __version__ = (0, 1, 1)
 
+reqs = [line.strip() for line in open("requirements.txt")]
+
 setup(
     name="pydap_extras",
     version=".".join(str(d) for d in __version__),
     description="PCIC Pydap handlers and Responses for Python 3",
-    install_requires=[
-        "pydap",
-        "requests",
-        "SQLAlchemy",
-        "PyYAML",
-        "XlsxWriter",
-        "pupynere-pdp",
-    ],
+    install_requires=reqs,
     packages=find_packages(),
     zip_safe=True,
     classifiers=[
