@@ -1,12 +1,7 @@
 import pytest
-from collections import namedtuple
 from webob.request import Request
-from sqlalchemy.orm import sessionmaker
 
-from pycds import Network, Station
-from pydap_extras.handlers.sql import Engines
 from pydap_extras.handlers.pcic import (
-    PcicSqlHandler,
     RawPcicSqlHandler,
     ClimoPcicSqlHandler,
 )

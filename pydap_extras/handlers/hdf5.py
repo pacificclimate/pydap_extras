@@ -3,14 +3,12 @@ import re
 import time
 from stat import ST_MTIME
 from email.utils import formatdate
-from itertools import islice
 import logging
-import numpy as np
 
 import h5py
 from pupynere import REVERSE
 
-from pydap.model import DatasetType, StructureType, SequenceType, GridType, BaseType
+from pydap.model import DatasetType, StructureType, GridType, BaseType
 from pydap.handlers.lib import BaseHandler
 from pydap.exceptions import OpenFileError
 from .stack_slice import StackableSlice

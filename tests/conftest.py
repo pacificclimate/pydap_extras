@@ -1,3 +1,4 @@
+import pytest
 import csv
 import os
 from datetime import datetime
@@ -6,33 +7,20 @@ from tempfile import NamedTemporaryFile
 
 from pkg_resources import resource_filename
 
-import pytest
 import numpy.random
 import h5py
 from pydap_extras.handlers.hdf5 import Hdf5Data
 
-import pytest
 import pycds
 from pycds import *
 from pydap_extras.handlers.pcic import RawPcicSqlHandler
 
 import testing.postgresql
 from pycds.util import *
-from sqlalchemy.ext.declarative import declarative_base, DeferredReflection
-from sqlalchemy import (
-    Column,
-    Integer,
-    ForeignKey,
-    String,
-    DateTime,
-    Float,
-    create_engine,
-    event,
-    not_,
-    and_,
-)
+from sqlalchemy import create_engine
+
 from sqlalchemy.orm import sessionmaker
-from sqlalchemy.schema import DDL, CreateSchema
+from sqlalchemy.schema import CreateSchema
 
 TestNetwork = namedtuple("TestNetwork", "name long_name color")
 

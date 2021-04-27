@@ -1,4 +1,3 @@
-import pytest
 from pydap_extras.responses.xlsx import XLSXResponse
 from pydap_extras.handlers.csv import CSVHandler
 from webob import Request

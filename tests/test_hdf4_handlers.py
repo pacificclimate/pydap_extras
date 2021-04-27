@@ -1,6 +1,4 @@
 from pkg_resources import resource_filename
-
-import h5py
 import numpy
 from webob.request import Request
 
