@@ -82,9 +82,7 @@ class NCResponse(BaseResponse):
                 if dtype == np.dtype("datetime64"):
                     dtype = np.dtype("float32")
                 elif dtype == np.dtype("object"):
-                    raise TypeError(
-                        f"Don't know how to handle numpy type {dtype}"
-                    )
+                    raise TypeError(f"Don't know how to handle numpy type {dtype}")
 
                 var = self.nc.createVariable(
                     child.name, dtype.char, dim, attributes=child.attributes
