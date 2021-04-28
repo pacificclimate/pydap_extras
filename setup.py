@@ -20,7 +20,7 @@ setup(
         "Programming Language :: Python :: 3 :: Only",
         "Topic :: Scientific/Engineering :: Atmospheric Science",
     ],
-    entry_points="""[pydap.handlers]
+    entry_points="""[pydap.handler]
     sql = pydap_extras.handlers.sql:SQLHandler
     csv = pydap_extras.handlers.csv:CSVHandler
     rsql = pydap_extras.handlers.pcic:RawPcicSqlHandler
