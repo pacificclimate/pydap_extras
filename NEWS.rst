@@ -1,6 +1,13 @@
 News / Release Notes
 ====================
 
+0.2.0
+-----
+*Release Date: 28-April-2021*
+
+* Add hdf5 pydap handler
+* Add netcdf pydap response
+
 0.1.1
 ------
 *Release Date: 13-April-2021*
