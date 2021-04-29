@@ -24,7 +24,8 @@ setup(
     sql = pydap_extras.handlers.sql:SQLHandler
     csv = pydap_extras.handlers.csv:CSVHandler
     rsql = pydap_extras.handlers.pcic:RawPcicSqlHandler
-    csql = pydap.handlers.pcic:ClimoPcicSqlHandler
+    csql = pydap_extras.handlers.pcic:ClimoPcicSqlHandler
+    hdf5 = pydap_extras.handlers.hdf5:HDF5Handler
 [pydap.response]
     nc = pydap_extras.responses.netcdf:NCResponse
     xlsx = pydap_extras.responses.xlsx:XLSXResponse
