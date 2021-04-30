@@ -1,6 +1,12 @@
 News / Release Notes
 ====================
 
+0.2.1
+-----
+*Release Date: 30-April-2021*
+
+* Fix entry_points
+  
 0.2.0
 -----
 *Release Date: 28-April-2021*
