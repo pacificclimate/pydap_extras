@@ -114,7 +114,7 @@ def write_metadata(ws, var, i, j, format_):
 
 
 def write_attr(ws, k, v, i, j, format_):
-    col_width = ws.col_sizes[j] if j in ws.col_sizes else 0
+    col_width = ws.col_sizes[j][0] if j in ws.col_sizes else 0
     col_width = max(col_width, (len(k) + 1))
 
     ws.set_column(j, j, col_width)
