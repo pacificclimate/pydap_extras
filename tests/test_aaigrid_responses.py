@@ -21,13 +21,13 @@ def test_single_dimension_failure(single_dimension_dataset):
     with pytest.raises(HTTPBadRequest) as excinfo:
         app = AAIGridResponse(single_dimension_dataset)
 
-    assert excinfo.value.message.endswith("supports Grids with 2 or 3 dimensions, but one of the requested grids contains 1 dimension")
+    assert str(excinfo.value).endswith("supports Grids with 2 or 3 dimensions, but one of the requested grids contains 1 dimension")
 
 def test_four_dimension_failure(four_dimension_dataset):
     with pytest.raises(HTTPBadRequest) as excinfo:
         app = AAIGridResponse(four_dimension_dataset)
 
-    assert excinfo.value.message.endswith("supports Grids with 2 or 3 dimensions, but one of the requested grids contains 4 dimensions")
+    assert str(excinfo.value).endswith("supports Grids with 2 or 3 dimensions, but one of the requested grids contains 4 dimensions")
 
 
 def notest_can_call(app, temp_file):
@@ -108,7 +108,7 @@ def test_real_data(real_data_test, temp_file):
     req = Request.blank('/pr+tasmax+tasmin_day_BCCA+ANUSPLIN300+ACCESS1-0_historical+rcp45_r1i1p1_19500101-21001231.h5.aig?tasmax&')
     resp = req.get_response(real_data_test)
     assert resp.status == '200 OK'
-    print resp.body
+    print(resp.body)
 
     for chunk in resp.app_iter:
         temp_file.write(chunk)
@@ -165,7 +165,7 @@ def test_detect_dataset_transform(single_layer_dataset):
     assert xform == [-122.5, -0.5, 0, 51.0, 0, 1.0]
 
 def test_dectect_transform_on_real_data():
-    test_h5 = resource_filename('pydap.responses.aaigrid', 'data/bcca_canada.h5')
+    test_h5 = resource_filename('tests', 'data/bcca_canada.h5')
     handler = HDF5Handler(test_h5)
     xform = np.array(detect_dataset_transform(handler.dataset['tasmax']))
     expected = np.array([-141.041, 0.083, 0, 83.541, 0, 0.083])
@@ -174,5 +174,4 @@ def test_dectect_transform_on_real_data():
 def test_wrong_dataset_type(single_layer_dataset):
     with pytest.raises(Exception) as excinfo:
         xform = detect_dataset_transform(single_layer_dataset)
-
-    assert excinfo.value.message.startswith("Dataset must be of type Grid")
+    assert str(excinfo.value).startswith("Dataset must be of type Grid")

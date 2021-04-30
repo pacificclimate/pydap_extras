@@ -2,7 +2,7 @@ import os
 from os.path import basename, sep
 import logging
 from tempfile import gettempdir, SpooledTemporaryFile
-from itertools import imap, izip, chain, izip_longest, repeat
+from itertools import chain, zip_longest, repeat
 from zipfile import ZipFile, ZIP_DEFLATED
 import re
 
@@ -105,7 +105,7 @@ class AAIGridResponse(BaseResponse):
         # Send each of the grids through _grid_array_to_gdal_files
         # which will generate multiple files per grid
         logger.debug("__iter__: creating the file generator for grids {}".format(grids))
-        file_generator = chain.from_iterable(imap(generate_aaigrid_files, grids))
+        file_generator = chain.from_iterable(map(generate_aaigrid_files, grids))
 
         return ziperator(file_generator)
 
@@ -203,7 +203,7 @@ def create_gdal_mem_dataset(xlen, ylen, geo_transform, srs, target_type, missval
     # so we have to create the dataset with something else first
     driver = gdal.GetDriverByName('MEM')
     metadata = driver.GetMetadata()
-    assert metadata.has_key(gdal.DCAP_CREATE)
+    assert gdal.DCAP_CREATE in metadata
     assert metadata[gdal.DCAP_CREATE] == 'YES'
 
     dst = driver.Create('', xlen, ylen, 1, target_type)
@@ -240,8 +240,8 @@ def get_map(dst, axis):
        :returns: The Pydap BaseType which corresponds to the mapping for the given axis
        :rtype: BaseType
     '''
-    for map_name, map_ in dst.maps.iteritems():
-        if map_.attributes.has_key('axis'):
+    for map_name, map_ in dst.maps.items():
+        if 'axis' in map_.attributes:
             if map_.attributes['axis'] == axis:
                 return map_
     return None
@@ -257,13 +257,13 @@ def get_time_map(dst):
        :returns: The Pydap Basetype which corresponds to the time axis
        :rtype: BaseType
     '''
-    for map_name, map_ in dst.maps.iteritems():
+    for map_name, map_ in dst.maps.items():
         attrs = map_.attributes
-        if attrs.has_key('axis') and attrs['axis'] == 'T':
+        if 'axis' in attrs and attrs['axis'] == 'T':
             return map_
-        if attrs.has_key('standard_name') and attrs['standard_name'] == 'time':
+        if 'standard_name' in attrs and attrs['standard_name'] == 'time':
             return map_
-        if attrs.has_key('units') and re.match('(day|d|hour|h|hr|minute|min|second|sec|s)s? since .+', attrs['units']):
+        if 'units' in attrs and re.match('(day|d|hour|h|hr|minute|min|second|sec|s)s? since .+', attrs['units']):
             return map_
     return None
 
