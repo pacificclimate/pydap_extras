@@ -505,6 +505,6 @@ def temp_file(request):
 
 @pytest.fixture
 def real_data_test():
-    test_h5 = resource_filename('pydap.responses.aaigrid', 'data/bcca_canada.h5')
+    test_h5 = resource_filename('tests', 'data/bcca_canada.h5')
     return HDF5Handler(test_h5)
 

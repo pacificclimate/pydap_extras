@@ -27,7 +27,7 @@ def ziperator(responders):
        :rtype: iterator
     '''
     with SpooledTemporaryFile(1024*1024*1024) as f:
-        yield 'PK' # Response headers aren't sent until the first chunk of data is sent.  Let's get this repsonse moving!
+        yield 'PK'.encode() # Response headers aren't sent until the first chunk of data is sent.  Let's get this repsonse moving!
         z = ZipFile(f, 'w', ZIP_DEFLATED, True)
 
         for name, responder in responders:
@@ -159,6 +159,14 @@ def _grid_array_to_gdal_files(dap_grid_array, srs, geo_transform, filename_fmt='
         if missval:
             layer = ma.masked_equal(layer, missval)
 
+        # sometimes layers read from a file
+        # come through with an extra empty dimension
+        if len(layer.shape) == 3 and layer.shape[0] == 1:
+            logger.debug("Reshaping layer {}".format(i))
+            layer = layer[0]
+        elif len(layer.shape) != 2:
+            raise ValueError("_grid_array_to_gdal_files received a layer of shape {}".format(layer.shape))
+
         logger.debug("Data: {}".format(layer))
         meta_ds.GetRasterBand(1).WriteArray( numpy.flipud(layer) )
         
@@ -242,7 +250,11 @@ def get_map(dst, axis):
     '''
     for map_name, map_ in dst.maps.items():
         if 'axis' in map_.attributes:
-            if map_.attributes['axis'] == axis:
+            # sometimes attributes are bytes, sometimes normal strings
+            axis_value = map_.attributes['axis']
+            if isinstance(axis_value, bytes):
+                axis_value = axis_value.decode()
+            if axis_value == axis:
                 return map_
     return None
 
@@ -287,19 +299,19 @@ def detect_dataset_transform(dst):
     if type(xmap.data) == numpy.ndarray:
         xarray = xmap.data
     else:
-        xarray = iter(xmap.data).next() # Might to iterate over proxy objects to actually get the data
+        xarray = next(iter(xmap.data)) # Might to iterate over proxy objects to actually get the data
 
     xd = numpy.diff(xarray)
-    pix_width = xd[0]
+    pix_width = xd.flatten()[0]
     assert numpy.isclose(pix_width, xd).all(), "No support for irregular grids"
 
     if type(ymap.data) == numpy.ndarray:
         yarray = ymap.data
     else:
-        yarray = iter(ymap.data).next()
+        yarray = next(iter(ymap.data))
 
     yd = numpy.diff(yarray)
-    pix_height = yd[0]
+    pix_height = yd.flatten()[0]
     assert numpy.isclose(pix_height, yd).all(), "No support for irregular grids"
 
     ulx = numpy.min(xarray) - pix_width
