@@ -16,12 +16,17 @@ jobs:
       uses: actions/setup-python@v2
       with:
         python-version: ${{ matrix.python-version }}
-    - name: Install dependencies
+    - name: Install system dependencies
       env:
         PIP_INDEX_URL: https://pypi.pacificclimate.org/simple
       run: |
         sudo apt purge postgresql-client-13 postgresql-server-dev-all
         sudo apt-get install postgresql-plpython3-12 postgresql-12-postgis-3
+        sudo apt-get install libhdf5-dev libgdal-dev libnetcdf-dev
+    - name: Install python dependencies
+        env:
+          CPLUS_INCLUDE_PATH /usr/include/gdal
+          C_INCLUDE_PATH /usr/include/gdal	    
         pip install -U pip
         pip install -r requirements.txt -r test_requirements.txt
         pip install -e .
