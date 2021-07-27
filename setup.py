@@ -29,5 +29,6 @@ setup(
 [pydap.response]
     nc = pydap_extras.responses.netcdf:NCResponse
     xlsx = pydap_extras.responses.xlsx:XLSXResponse
+    aig = pydap_extras.responses.aaigrid:AAIGridResponse
 """,
 )
