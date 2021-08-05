@@ -16,20 +16,53 @@ jobs:
       uses: actions/setup-python@v2
       with:
         python-version: ${{ matrix.python-version }}
+
     - name: Install system dependencies
       run: |
         sudo apt-get update
         sudo apt purge postgresql-client-13 postgresql-server-dev-all
-        sudo apt-get install postgresql-plpython3-12 postgresql-12-postgis-3 libhdf5-dev libgdal-dev libnetcdf-dev
-    - name: Install python dependencies
+        sudo apt-get install postgresql-plpython3-12 postgresql-12-postgis-3
+        sudo apt-get install libhdf5-dev libgdal-dev libnetcdf-dev
+
+    - name: Install pipenv
+      run: |
+        pip install -U pipenv
+
+    - id: cache-pipenv
+      uses: actions/cache@v2
+      with:
+        path: ~/.local/share/virtualenvs
+        key: ${{ runner.os }}-pipenv-${{ hashFiles('**/Pipfile.lock') }}
+
+    - name: Install dependencies if changed
+      if: steps.cache-pipenv.outputs.cache-hit != 'true' && ${{ matrix.python-version == '3.8' }}
+      run: |
+        pipenv install --dev
+        pipenv uninstall numpy GDAL
+        pipenv run pip install numpy
+        pipenv run pip install GDAL==$(gdal-config --version) --global-option=build_ext --global-option="-I/usr/include/gdal"
+        pipenv install -e .
+
+    - name: Re-install dependencies if alternative python version
+      if: ${{ matrix.python-version != '3.8' }}
+      run: |
+        mv Pipfile.lock do-not-use
+        pipenv install --python ${{ matrix.python-version }} --dev
+        pipenv uninstall numpy GDAL
+        pipenv run pip install numpy
+        pipenv run pip install GDAL==$(gdal-config --version) --global-option=build_ext --global-option="-I/usr/include/gdal"
+        pipenv install -e .
+        
+    - name: Test with pytest (full)
+      if: github.ref == 'refs/heads/master'
       env:
-        PIP_INDEX_URL: https://pypi.pacificclimate.org/simple
-        CPLUS_INCLUDE_PATH: /usr/include/gdal
-        C_INCLUDE_PATH: /usr/include/gdal
+        TZ: Canada/Pacific
       run: |
-        pip install -U pip
-        pip install -r requirements.txt -r test_requirements.txt
-        pip install -e .
-    - name: Test with pytest
+        pipenv run pytest -m "not online" -v --tb=short --cov
+
+    - name: Test with pytest (fast)
+      if: github.ref != 'refs/heads/master'
+      env:
+        TZ: Canada/Pacific
       run: |
-        pytest
+        pipenv run pytest -m "not slow and not online" -v --tb=short
