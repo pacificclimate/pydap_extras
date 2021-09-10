@@ -7,16 +7,14 @@ Installation
 ============
 .. code-block:: bash
   
-   python3 -m venv venv
-   source venv/bin/activate
-   pip install -r requirements.txt
-   pip install -e .   
+   pipenv install
+   # or for development
+   pipenv install --dev  
 Tests
 =====
 .. code-block:: bash
   
-   pip install -r test_requirements.txt
-   pytest
+   pipenv run pytest
 App
 ===
 The app will run on port 8001.
