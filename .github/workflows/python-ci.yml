@@ -38,20 +38,20 @@ jobs:
       if: steps.cache-pipenv.outputs.cache-hit != 'true' && ${{ matrix.python-version == '3.8' }}
       run: |
         pipenv install --dev
+        pipenv install -e .
         pipenv uninstall numpy GDAL
         pipenv run pip install numpy
         pipenv run pip install GDAL==$(gdal-config --version) --global-option=build_ext --global-option="-I/usr/include/gdal"
-        pipenv install -e .
 
     - name: Re-install dependencies if alternative python version
       if: ${{ matrix.python-version != '3.8' }}
       run: |
         mv Pipfile.lock do-not-use
         pipenv install --python ${{ matrix.python-version }} --dev
+        pipenv install -e .
         pipenv uninstall numpy GDAL
         pipenv run pip install numpy
         pipenv run pip install GDAL==$(gdal-config --version) --global-option=build_ext --global-option="-I/usr/include/gdal"
-        pipenv install -e .
         
     - name: Test with pytest (full)
       if: github.ref == 'refs/heads/master'
