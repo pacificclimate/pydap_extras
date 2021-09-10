@@ -34,6 +34,32 @@ jobs:
         path: ~/.local/share/virtualenvs
         key: ${{ runner.os }}-pipenv-${{ hashFiles('**/Pipfile.lock') }}
 
+    # Both of the installation steps below set up the `GDAL` package.
+    # Unfortunately, this package is very fussy in Github Actions 
+    # (particularly for `pydap-extras`) and as a result we have to do 
+    # some funky stuff to make it happy. This comment will describe 
+    # each installation step to give some more context to the next 
+    # author.
+    # 
+    # 1. Installing from the `Pipfile` + setup.py
+    #    The first two steps are fairly normal, we run a regular "dev"
+    #    installation and then separately install from `setup.py`. A 
+    #    `-e .` is NOT required for local to run the tests locally but
+    #    strangely is required for actions.
+    #
+    # 2. Uninstalling `numpy` & `GDAL`
+    #    These packages are required and should maintain their place 
+    #    in the `Pipfile`, however there is no way to ensure their 
+    #    installation order. To ensure `numpy` is installed first, we 
+    #    remove both packages from the environment.
+    #
+    # 3. Installing `numpy`
+    #    Re-install `numpy` using `pip` through `pipenv` to prevent the 
+    #    lengthy "locking" process from slowing down the workflow.
+    #
+    # 4. Installing `GDAL`
+    #    Like `numpy` we want to re-install `GDAL`. Here we are 
+    #    ensuring the version matches the version on the OS.
     - name: Install dependencies if changed
       if: steps.cache-pipenv.outputs.cache-hit != 'true' && ${{ matrix.python-version == '3.8' }}
       run: |
@@ -41,7 +67,7 @@ jobs:
         pipenv install -e .
         pipenv uninstall numpy GDAL
         pipenv run pip install numpy
-        pipenv run pip install GDAL==$(gdal-config --version) --global-option=build_ext --global-option="-I/usr/include/gdal"
+        pipenv run pip install GDAL==$(gdal-config --version)
 
     - name: Re-install dependencies if alternative python version
       if: ${{ matrix.python-version != '3.8' }}
@@ -51,7 +77,7 @@ jobs:
         pipenv install -e .
         pipenv uninstall numpy GDAL
         pipenv run pip install numpy
-        pipenv run pip install GDAL==$(gdal-config --version) --global-option=build_ext --global-option="-I/usr/include/gdal"
+        pipenv run pip install GDAL==$(gdal-config --version)
         
     - name: Test with pytest (full)
       if: github.ref == 'refs/heads/master'
