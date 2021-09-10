@@ -19,7 +19,7 @@ setup(
         "Paste",
         "XlsxWriter",
         "numpy",
-        "gdal",
+        "gdal==3.0.4",
     ],
     zip_safe=True,
     classifiers=[
