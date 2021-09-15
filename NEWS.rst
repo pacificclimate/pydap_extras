@@ -1,6 +1,12 @@
 News / Release Notes
 ====================
 
+0.2.2
+-----
+*Release Date: 15-September-2021*
+
+* Update behind the scenes installation process
+
 0.2.1
 -----
 *Release Date: 30-April-2021*
