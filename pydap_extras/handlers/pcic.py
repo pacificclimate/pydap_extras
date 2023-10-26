@@ -10,7 +10,8 @@ from tempfile import NamedTemporaryFile
 from contextlib import contextmanager
 import logging
 
-from sqlalchemy import or_, not_, func
+from sqlalchemy import func, text
+from sqlalchemy.dialects.postgresql import array, ARRAY, TEXT
 from sqlalchemy.orm import sessionmaker
 from paste.httpexceptions import HTTPNotFound
 from geoalchemy2.functions import ST_X, ST_Y
@@ -19,6 +20,11 @@ from pydap_extras.handlers.sql import SQLHandler, Engines
 from pycds import *
 
 logger = logging.getLogger(__name__)
+
+# Query fragment that invokes the user-defined database function variable_tags on the
+# Variable table. This is used in a couple of queries in the classes defined below.
+variable_tags = func.variable_tags(text(Variable.__tablename__), type_=ARRAY(TEXT))
+
 
 # From http://docs.sqlalchemy.org/en/rel_0_9/orm/session.html#session-faq-whentocreate
 @contextmanager
@@ -251,14 +257,7 @@ class RawPcicSqlHandler(PcicSqlHandler):
             .join(Station)
             .join(Network)
             .filter(Station.id == stn_id)
-            .filter(
-                not_(
-                    or_(
-                        Variable.cell_method.like("%within%"),
-                        Variable.cell_method.like("%over%"),
-                    )
-                )
-            )
+            .filter(variable_tags.contains(array(["observation"])))
         )
         return [
             (
@@ -298,12 +297,7 @@ class ClimoPcicSqlHandler(PcicSqlHandler):
             .join(History)
             .join(VarsPerHistory)
             .filter(Station.id == stn_id)
-            .filter(
-                or_(
-                    Variable.cell_method.like("%within%"),
-                    Variable.cell_method.like("%over%"),
-                )
-            )
+            .filter(variable_tags.contains(array(["climatology"])))
         )
 
         return [
