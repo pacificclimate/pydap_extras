@@ -92,3 +92,7 @@ jobs:
         TZ: Canada/Pacific
       run: |
         pipenv run pytest -m "not slow and not online" -v --tb=short
+
+    - name: Code format check
+      if: ${{ matrix.python-version == '3.8' }}
+      run: poetry run black . --check
