@@ -19,8 +19,13 @@ jobs:
 
     - name: Install system dependencies
       run: |
+        echo "### update"
         sudo apt-get update
-        sudo apt purge postgresql-client-13 postgresql-server-dev-all
+        echo "### list installed"
+        apt list --installed | grep postgresql
+        echo "### purge"
+        sudo apt purge postgresql-client-14 postgresql-server-dev-all
+        echo "### install"
         sudo apt-get install postgresql-plpython3-12 postgresql-12-postgis-3
         sudo apt-get install libhdf5-dev libgdal-dev libnetcdf-dev
 
