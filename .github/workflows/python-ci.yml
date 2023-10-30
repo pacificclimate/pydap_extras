@@ -6,17 +6,16 @@ jobs:
   test:
 
     runs-on: ubuntu-20.04
-    container: pcic/geospatial-python:3.2.0
-#    strategy:
-#      matrix:
-#        python-version: [3.7, 3.8]
+    strategy:
+      matrix:
+        python-version: [3.7, 3.8]
 
     steps:
-#    - uses: actions/checkout@v2
-#    - name: Set up Python ${{ matrix.python-version }}
-#      uses: actions/setup-python@v2
-#      with:
-#        python-version: ${{ matrix.python-version }}
+    - uses: actions/checkout@v2
+    - name: Set up Python ${{ matrix.python-version }}
+      uses: actions/setup-python@v2
+      with:
+        python-version: ${{ matrix.python-version }}
 
     - name: Install system dependencies
       run: |
@@ -26,22 +25,17 @@ jobs:
         curl https://www.postgresql.org/media/keys/ACCC4CF8.asc | sudo apt-key add -
         sudo sh -c 'echo "deb http://apt.postgresql.org/pub/repos/apt $(lsb_release -cs)-pgdg main" > /etc/apt/sources.list.d/pgdg.list'
         sudo apt-get update
-        
         # Install PostGIS
         echo "### Install PostGIS"
         sudo apt-get install postgresql-14-postgis-3
-        
         # Install plpython3
         echo "### Install plpython3"
         sudo apt-get install postgresql-plpython3-14
-        
-        # TODO: Remove
         # Install other deps
-#        sudo apt-get install libhdf5-dev libgdal-dev libnetcdf-dev
+        sudo apt-get install libhdf5-dev libgdal-dev libnetcdf-dev
 
     - name: Install pipenv
       run: |
-        # Pin version?
         pip install -U pipenv
 
       # TODO: Consider removing the caching. I'm not sure it does us much good.
