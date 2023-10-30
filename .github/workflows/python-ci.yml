@@ -34,16 +34,16 @@ jobs:
         # Install other deps
         sudo apt-get install libhdf5-dev libgdal-dev libnetcdf-dev
 
-    # TODO: Consider removing the caching. I'm not sure it does us much good.
     - name: Install pipenv
       run: |
         pip install -U pipenv
 
-    - id: cache-pipenv
-      uses: actions/cache@v2
-      with:
-        path: ~/.local/share/virtualenvs
-        key: ${{ runner.os }}-pipenv-${{ hashFiles('**/Pipfile.lock') }}
+      # TODO: Consider removing the caching. I'm not sure it does us much good.
+#    - id: cache-pipenv
+#      uses: actions/cache@v2
+#      with:
+#        path: ~/.local/share/virtualenvs
+#        key: ${{ runner.os }}-pipenv-${{ hashFiles('**/Pipfile.lock') }}
 
     # Both of the installation steps below set up the `GDAL` package.
     # Unfortunately, this package is very fussy in Github Actions 
@@ -71,24 +71,40 @@ jobs:
     # 4. Installing `GDAL`
     #    Like `numpy` we want to re-install `GDAL`. Here we are 
     #    ensuring the version matches the version on the OS.
+    #
+    #
+    # RG: This still doesn't work: This script is failing because GDAL wants
+    # numpy, but GDAL is installed first. The explanation above seems
+    # to have a logical flaw in it -- namely that numpy and GDAL are installed
+    # in arbitrary order -- but that numpy must be installed first. (The reason
+    # for this, I infer from the recent errors, is that GDAL install will fail
+    # without numpy.) So the pipenv install can fail, and no subsequent actions
+    # can fix it.
+    #
+    # However, we can pre-install numpy in the venv before we do the
+    # pipenv install. And it looks from experimentation as if pipenv will
+    # create a venv on any first command, not just on pipenv install.
     - name: Install dependencies if changed
-      if: steps.cache-pipenv.outputs.cache-hit != 'true' && ${{ matrix.python-version == '3.8' }}
+#      if: steps.cache-pipenv.outputs.cache-hit != 'true' && ${{ matrix.python-version == '3.8' }}
       run: |
+        # Pre-install numpy
+        pipenv run pip install numpy
         pipenv install --dev
         pipenv install -e .
+        # I think the rest can be eliminated, but let's see what happens first
         pipenv uninstall numpy GDAL
         pipenv run pip install numpy
         pipenv run pip install GDAL==$(gdal-config --version)
 
-    - name: Re-install dependencies if alternative python version
-      if: ${{ matrix.python-version != '3.8' }}
-      run: |
-        mv Pipfile.lock do-not-use
-        pipenv install --python ${{ matrix.python-version }} --dev
-        pipenv install -e .
-        pipenv uninstall numpy GDAL
-        pipenv run pip install numpy
-        pipenv run pip install GDAL==$(gdal-config --version)
+#    - name: Re-install dependencies if alternative python version
+#      if: ${{ matrix.python-version != '3.8' }}
+#      run: |
+#        mv Pipfile.lock do-not-use
+#        pipenv install --python ${{ matrix.python-version }} --dev
+#        pipenv install -e .
+#        pipenv uninstall numpy GDAL
+#        pipenv run pip install numpy
+#        pipenv run pip install GDAL==$(gdal-config --version)
         
     - name: Test with pytest (full)
       if: github.ref == 'refs/heads/master'
