@@ -1,10 +1,7 @@
 import pytest
 import csv
 import os
-from datetime import datetime
-from collections import namedtuple
 from tempfile import NamedTemporaryFile
-from pkg_resources import resource_filename
 
 import testing.postgresql
 from pycds.util import *
