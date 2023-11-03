@@ -43,7 +43,7 @@ jobs:
         #   https://github.com/pypa/setuptools/issues/2781
         #   https://github.com/OSGeo/gdal/issues/7541
         #   etc.
-        pip install "setuptools <58"
+        python3 -m pip install --upgrade --no-cache-dir "setuptools<58"
         pip install -U pipenv
 
     # TODO: Evaluate if this caching delivers value. It makes things complicated.
