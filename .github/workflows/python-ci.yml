@@ -36,6 +36,14 @@ jobs:
 
     - name: Install pipenv
       run: |
+        pip install -U pip
+        # Later versions of setuptools do not support use_2to3, which the 
+        # current version of GDAL requires. See 
+        #   https://github.com/nextgis/pygdal/issues/67
+        #   https://github.com/pypa/setuptools/issues/2781
+        #   https://github.com/OSGeo/gdal/issues/7541
+        #   etc.
+        pip install "setuptools <58"
         pip install -U pipenv
 
     # TODO: Evaluate if this caching delivers value. It makes things complicated.
