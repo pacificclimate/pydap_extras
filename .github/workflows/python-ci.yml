@@ -19,9 +19,19 @@ jobs:
 
     - name: Install system dependencies
       run: |
+        echo "## add legacy repo"
+        sudo apt-get install -y curl ca-certificates gnupg
+        sudo curl https://www.postgresql.org/media/keys/ACCC4CF8.asc | sudo apt-key add -
+        sudo echo 'deb http://apt.postgresql.org/pub/repos/apt focal-pgdg main' | sudo tee /etc/apt/sources.list.d/pgdg.list
+        echo "## update"
         sudo apt-get update
+        echo "## list installed postgres"
+        apt list --installed | grep postgresql
+        echo "## purge postgresql support"
         sudo apt purge postgresql-client-13 postgresql-server-dev-all
+        echo "## install postgresql extensions"
         sudo apt-get install postgresql-plpython3-12 postgresql-12-postgis-3
+        echo "## install others"
         sudo apt-get install libhdf5-dev libgdal-dev libnetcdf-dev
 
     - name: Install pipenv
