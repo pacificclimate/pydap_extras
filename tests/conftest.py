@@ -16,12 +16,10 @@ import h5py
 import pycds
 import numpy as np
 from pycds import *
-from netCDF4 import Dataset
 from pydap.model import DatasetType, BaseType, SequenceType, GridType
 from pydap.handlers.netcdf import NetCDFHandler
 from pydap_extras.handlers.pcic import RawPcicSqlHandler
 from pydap_extras.handlers.hdf5 import Hdf5Data, HDF5Handler
-from pydap_extras.responses.aaigrid import AAIGridResponse
 
 
 TestNetwork = namedtuple("TestNetwork", "name long_name color")
@@ -505,16 +503,6 @@ def four_dimension_dataset():
     grid["t"] = BaseType("t", np.arange(2))
     dst["my_grid"] = grid
     return dst
-
-
-@pytest.fixture
-def single_layer_app(single_layer_dataset):
-    return AAIGridResponse(single_layer_dataset)
-
-
-@pytest.fixture
-def multi_layer_app(multi_layer_dataset):
-    return AAIGridResponse(multi_layer_dataset)
 
 
 @pytest.fixture(scope="function")
