@@ -22,15 +22,16 @@ jobs:
 
     - name: Install system dependencies
       run: |
-        # Add legacy repo and update
-        sudo apt-get install -y curl ca-certificates gnupg
-        sudo curl https://www.postgresql.org/media/keys/ACCC4CF8.asc | sudo apt-key add -
-        sudo echo 'deb http://apt.postgresql.org/pub/repos/apt focal-pgdg main' | sudo tee /etc/apt/sources.list.d/pgdg.list
-        sudo apt-get update
-        # Purge unwanted postgresql support
-        sudo apt purge postgresql-client-13 postgresql-server-dev-all
+        #        # Add legacy repo and update
+        #        sudo apt-get install -y curl ca-certificates gnupg
+        #        sudo curl https://www.postgresql.org/media/keys/ACCC4CF8.asc | sudo apt-key add -
+        #        sudo echo 'deb http://apt.postgresql.org/pub/repos/apt focal-pgdg main' | sudo tee /etc/apt/sources.list.d/pgdg.list
+        #        sudo apt-get update
+        #        # Purge unwanted postgresql support
+        #        sudo apt purge postgresql-client-13 postgresql-server-dev-all
         # Install postgresql extensions
-        sudo apt-get install postgresql-plpython3-12 postgresql-12-postgis-3
+        sudo apt-get install postgresql-plpython3-14 postgresql-14-postgis-3
+        # sudo apt-get install postgresql-plpython3-12 postgresql-12-postgis-3
         # Install remaining dependencies
         sudo apt-get install libhdf5-dev libgdal-dev libnetcdf-dev
 
