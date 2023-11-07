@@ -62,3 +62,7 @@ jobs:
         TZ: Canada/Pacific
       run: |
         poetry run pytest -m "not slow and not online" -v --tb=short
+
+    - name: Code format check
+      run: |
+        poetry run black . --check
