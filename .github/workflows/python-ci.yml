@@ -8,7 +8,10 @@ jobs:
     runs-on: ubuntu-20.04
     strategy:
       matrix:
-        python-version: [3.7, 3.8]
+        python-version:
+          - "3.8"
+#          - "3.9"
+#          - "3.10"
 
     steps:
     - uses: actions/checkout@v2
@@ -24,61 +27,21 @@ jobs:
         sudo apt-get install postgresql-plpython3-12 postgresql-12-postgis-3
         sudo apt-get install libhdf5-dev libgdal-dev libnetcdf-dev
 
-    - name: Install pipenv
+    - name: Install Poetry
       run: |
-        pip install -U pipenv
+        curl -sSL https://install.python-poetry.org | python3 -
 
-    - id: cache-pipenv
-      uses: actions/cache@v2
-      with:
-        path: ~/.local/share/virtualenvs
-        key: ${{ runner.os }}-pipenv-${{ hashFiles('**/Pipfile.lock') }}
-
-    # Both of the installation steps below set up the `GDAL` package.
-    # Unfortunately, this package is very fussy in Github Actions 
-    # (particularly for `pydap-extras`) and as a result we have to do 
-    # some funky stuff to make it happy. This comment will describe 
-    # each installation step to give some more context to the next 
-    # author.
-    # 
-    # 1. Installing from the `Pipfile` + setup.py
-    #    The first two steps are fairly normal, we run a regular "dev"
-    #    installation and then separately install from `setup.py`. A 
-    #    `-e .` is NOT required for local to run the tests locally but
-    #    strangely is required for actions.
-    #
-    # 2. Uninstalling `numpy` & `GDAL`
-    #    These packages are required and should maintain their place 
-    #    in the `Pipfile`, however there is no way to ensure their 
-    #    installation order. To ensure `numpy` is installed first, we 
-    #    remove both packages from the environment.
-    #
-    # 3. Installing `numpy`
-    #    Re-install `numpy` using `pip` through `pipenv` to prevent the 
-    #    lengthy "locking" process from slowing down the workflow.
-    #
-    # 4. Installing `GDAL`
-    #    Like `numpy` we want to re-install `GDAL`. Here we are 
-    #    ensuring the version matches the version on the OS.
-    - name: Install dependencies if changed
-      if: steps.cache-pipenv.outputs.cache-hit != 'true' && ${{ matrix.python-version == '3.8' }}
+    # Installing this project is tricky, due to its dependency on GDAL.
+    # For an explanation, see the README.
+    - name: Install project
       run: |
-        pipenv install --dev
-        pipenv install -e .
-        pipenv uninstall numpy GDAL
-        pipenv run pip install numpy
-        pipenv run pip install GDAL==$(gdal-config --version)
+        # Pre-install initial packages (numpy, setuptools) 
+        poetry install --only initial
+        # Install gdal using pip3 into the Poetry virtualenv
+        poetry run pip3 install gdal==3.0.4
+        # Install rest of project
+        poetry install
 
-    - name: Re-install dependencies if alternative python version
-      if: ${{ matrix.python-version != '3.8' }}
-      run: |
-        mv Pipfile.lock do-not-use
-        pipenv install --python ${{ matrix.python-version }} --dev
-        pipenv install -e .
-        pipenv uninstall numpy GDAL
-        pipenv run pip install numpy
-        pipenv run pip install GDAL==$(gdal-config --version)
-        
     - name: Test with pytest (full)
       if: github.ref == 'refs/heads/master'
       env:
