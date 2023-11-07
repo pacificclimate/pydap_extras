@@ -18,10 +18,11 @@ python = "^3.8"
 
 
 [tool.poetry.group.initial.dependencies]
-# These dependencies must be installed before those any other groups,
+# These dependencies must be installed before those in any other groups,
 # including the main dependencies.
-numpy = "1.21"
+pip = "22.3.1"
 setuptools = "<58"
+numpy = "1.21"
 
 [tool.poetry.group.main.dependencies]
 # TODO: Loosen version constraints where possible.

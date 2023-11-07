@@ -571,6 +571,17 @@ python-dateutil = ">=2.8.2"
 scramp = ">=1.4.4"
 
 [[package]]
+name = "pip"
+version = "22.3.1"
+description = "The PyPA recommended tool for installing Python packages."
+optional = false
+python-versions = ">=3.7"
+files = [
+    {file = "pip-22.3.1-py3-none-any.whl", hash = "sha256:908c78e6bc29b676ede1c4d57981d490cb892eb45cd8c214ab6298125119e077"},
+    {file = "pip-22.3.1.tar.gz", hash = "sha256:65fd48317359f3af8e593943e6ae1506b66325085ea64b706a998c6e83eeaf38"},
+]
+
+[[package]]
 name = "pluggy"
 version = "1.3.0"
 description = "plugin and hook calling mechanisms for python"
@@ -1147,4 +1158,4 @@ files = [
 [metadata]
 lock-version = "2.0"
 python-versions = "^3.8"
-content-hash = "b9584e8b9c9501509c72b122f5fa23b14d0cd5cff20867eb32cdb16256a5f441"
+content-hash = "0a8666658889f5542679307dfb96fc7f17ac58741b71da75ad2f57f573893a8a"
