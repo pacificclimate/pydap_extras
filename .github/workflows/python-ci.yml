@@ -28,13 +28,11 @@ jobs:
         sudo echo 'deb http://apt.postgresql.org/pub/repos/apt focal-pgdg main' | sudo tee /etc/apt/sources.list.d/pgdg.list
         echo "## update"
         sudo apt-get update
-        echo "## list installed postgres"
-        apt list --installed | grep postgresql
         echo "## purge postgresql support"
         sudo apt purge postgresql-client-13 postgresql-server-dev-all
         echo "## install postgresql extensions"
         sudo apt-get install postgresql-plpython3-12 postgresql-12-postgis-3
-        echo "## install others"
+        echo "## install other deps"
         sudo apt-get install libhdf5-dev libgdal-dev libnetcdf-dev
 
     - name: Install Poetry
@@ -48,6 +46,12 @@ jobs:
         # Pre-install initial packages (numpy, setuptools) 
         poetry install --only initial
         # Install gdal using pip3 into the Poetry virtualenv
+        echo "##### pip3 --version"
+        poetry run pip3 --version
+        echo "##### setuptools"
+        poetry run pip3 freeze | grep setuptools
+        poetry show setuptools
+        echo "####"
         poetry run pip3 install gdal==3.0.4
         # Install rest of project
         poetry install
