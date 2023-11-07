@@ -43,13 +43,14 @@ jobs:
     # For an explanation, see the README.
     - name: Install project
       run: |
+        # Install required version of pip for successful gdal installation
+        poetry run pip3 install pip==22.3.1
         # Pre-install initial packages (numpy, setuptools) 
         poetry install --only initial
         # Install gdal using pip3 into the Poetry virtualenv
         echo "##### pip3 --version"
         poetry run pip3 --version
         echo "##### setuptools"
-        poetry run pip3 freeze | grep setuptools
         poetry show setuptools
         echo "####"
         poetry run pip3 install gdal==3.0.4
