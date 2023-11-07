@@ -54,11 +54,11 @@ jobs:
       env:
         TZ: Canada/Pacific
       run: |
-        pipenv run pytest -m "not online" -v --tb=short --cov
+        poetry run pytest -m "not online" -v --tb=short --cov
 
     - name: Test with pytest (fast)
       if: github.ref != 'refs/heads/master'
       env:
         TZ: Canada/Pacific
       run: |
-        pipenv run pytest -m "not slow and not online" -v --tb=short
+        poetry run pytest -m "not slow and not online" -v --tb=short
