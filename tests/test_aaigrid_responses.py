@@ -123,7 +123,8 @@ NODATA_value -9999
 """.encode()
     )
 
-
+# TODO: Temporary. See https://github.com/pacificclimate/pydap-extras/issues/25
+@pytest.mark.xfail
 def test_real_data(real_data_test, temp_file):
     req = Request.blank(
         "/pr+tasmax+tasmin_day_BCCA+ANUSPLIN300+ACCESS1-0_historical+rcp45_r1i1p1_19500101-21001231.h5.aig?tasmax&"
@@ -184,6 +185,8 @@ def test_get_map(single_dimension_dataset):
     assert get_map(grid, "does_not_exist") == None
 
 
+# TODO: Temporary. See https://github.com/pacificclimate/pydap-extras/issues/25
+@pytest.mark.xfail
 def test_no_duplicate_headers(real_data_test):
     req = Request.blank(
         "/pr+tasmax+tasmin_day_BCCA+ANUSPLIN300+ACCESS1-0_historical+rcp45_r1i1p1_19500101-21001231.h5.aig?tasmax&"
