@@ -1,10 +1,7 @@
 import pytest
 from webob.request import Request
 
-from pydap_extras.handlers.pcic import (
-    RawPcicSqlHandler,
-    ClimoPcicSqlHandler,
-)
+from pydap_extras.handlers.pcic import RawPcicSqlHandler, ClimoPcicSqlHandler
 
 
 @pytest.mark.parametrize(
@@ -21,7 +18,7 @@ from pydap_extras.handlers.pcic import (
                     "time: point",
                     "Instantaneous air temperature",
                     "Temperature (Point)",
-                ),
+                )
             ],
         ),
         # Climo
@@ -35,7 +32,7 @@ from pydap_extras.handlers.pcic import (
                     "t: mean within days t: mean within months t: mean over years",
                     "Climatological mean of monthly mean of mean daily temperature",
                     "Temperature Climatology (Mean)",
-                ),
+                )
             ],
         ),
     ],
