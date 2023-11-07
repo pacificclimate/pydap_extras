@@ -1,7 +1,7 @@
 [[tool.poetry.source]]
 name = "pcic-pypi"
 url = "https://pypi.pacificclimate.org/simple/"
-secondary = true
+priority = "supplemental"
 
 [tool.poetry]
 name = "pydap-extras"
