@@ -50,6 +50,5 @@ poetry run pytest
 The app will run on port 8001.
 
 ```bash  
-pip install -r test_requirements.txt
-python pydap_extras/app.py [filepath]
+poetry run python pydap_extras/app.py [filepath]
 ```
