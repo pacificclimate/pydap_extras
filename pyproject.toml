@@ -8,7 +8,7 @@ name = "pydap-extras"
 version = "0.2.2"
 description = "PCIC Pydap handlers and Responses for Python 3"
 authors = ["Rod Glover <rglover@uvic.ca>"]
-readme = "README.rst"
+readme = "README.md"
 packages = [{include = "pydap_extras"}]
 
 [tool.poetry.dependencies]
@@ -28,6 +28,12 @@ XlsxWriter = "==1.3.8"
 numpy = "1.21"
 gdal = "==3.0.4"
 paste = "^3.7.1"
+
+[tool.poetry.group.initial.dependencies]
+# These dependencies must be installed before those any other groups,
+# including the main dependencies.
+numpy = "1.21"
+setuptools = "<58"
 
 [tool.poetry.group.test.dependencies]
 pytest = "^7.4.3"
