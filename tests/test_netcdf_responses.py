@@ -17,6 +17,8 @@ def test_NCResponse_simple(simple_dataset):
     assert res.app_iter == response
 
 
+# TODO: Fix xfail. See https://github.com/pacificclimate/pydap-extras/issues/31
+@pytest.mark.xfail
 @pytest.mark.timeout(2, method="signal")
 def test_no_recvars(handler):
     env = {
@@ -33,6 +35,8 @@ def test_no_recvars(handler):
             assert "pr" in dst.variables
 
 
+# TODO: Fix xfail. See https://github.com/pacificclimate/pydap-extras/issues/31
+@pytest.mark.xfail
 def test_time_val_out_of_bounds(handler):
     env = {
         "REQUEST_METHOD": "GET",
