@@ -1,3 +1,8 @@
+from collections import namedtuple
+from datetime import datetime
+
+from pkg_resources import resource_filename
+
 import pytest
 import csv
 import os
@@ -13,10 +18,10 @@ import h5py
 import pycds
 import numpy as np
 from pycds import *
-from pydap.model import DatasetType, BaseType, SequenceType, GridType
+from pydap.model import DatasetType, BaseType, SequenceType
 from pydap.handlers.netcdf import NetCDFHandler
 from pydap_extras.handlers.pcic import RawPcicSqlHandler
-from pydap_extras.handlers.hdf5 import Hdf5Data, HDF5Handler
+from pydap_extras.handlers.hdf5 import Hdf5Data
 
 
 TestNetwork = namedtuple("TestNetwork", "name long_name color")
@@ -142,25 +147,6 @@ def session(engine):
     session.close()
 
 
-@pytest.fixture(scope="module")
-def mod_blank_postgis_session():
-    with testing.postgresql.Postgresql() as pg:
-        engine = create_engine(pg.url())
-        engine.execute("create extension postgis")
-        engine.execute(CreateSchema("crmp"))
-        sesh = sessionmaker(bind=engine)()
-        yield sesh
-
-
-@pytest.fixture(scope="module")
-def mod_empty_database_session(mod_blank_postgis_session):
-    sesh = mod_blank_postgis_session
-    engine = sesh.get_bind()
-    pycds.Base.metadata.create_all(bind=engine)
-    pycds.weather_anomaly.Base.metadata.create_all(bind=engine)
-    yield sesh
-
-
 @pytest.fixture(scope="function")
 def blank_postgis_session():
     with testing.postgresql.Postgresql() as pg:
@@ -263,12 +249,6 @@ def test_db_with_variables(test_session):
     sesh.commit()
 
     yield sesh
-
-
-@pytest.fixture(scope="module")
-def conn_params(mod_blank_postgis_session):
-    mod_blank_postgis_session.get_bind()
-    return mod_blank_postgis_session.get_bind()
 
 
 ObsTuple = namedtuple("ObsTuple", "time datum history variable")
@@ -433,88 +413,3 @@ def hdf5_dst(request):
     request.addfinalizer(fin)
 
     return dst
-
-
-## aagrid reponse
-
-
-@pytest.fixture
-def single_dimension_dataset():
-    dst = DatasetType("my_dataset")
-    grid = GridType("my_grid")
-    grid["my_var"] = BaseType("my_var", np.arange(6), dimensions=("x"))
-    grid["x"] = BaseType("x", np.arange(6), units="degrees_north", axis="X")
-    dst["my_grid"] = grid
-
-    return dst
-
-
-@pytest.fixture
-def single_layer_dataset():
-    dst = DatasetType("my_dataset")
-    grid = GridType("my_grid")
-    grid["my_var"] = BaseType(
-        "my_var", np.array([[3, 4, 5], [0, 1, 2]]), dimensions=("y", "x")
-    )
-    grid["y"] = BaseType(
-        "y", np.arange(48.0, 51.0, 1.0), units="degrees_north", axis="Y"
-    )
-    grid["x"] = BaseType(
-        "x", np.arange(-122.0, -123.5, -0.5), units="degrees_east", axis="X"
-    )
-    dst["my_grid"] = grid
-
-    return dst
-
-
-@pytest.fixture
-def multi_layer_dataset():
-    dst = DatasetType("my_dataset")
-    grid = GridType("my_grid")
-    grid["my_var"] = BaseType(
-        "my_var",
-        np.arange(24).reshape(4, 2, 3)[:, ::-1, ...],
-        dimensions=("t", "y", "x"),
-    )
-    grid["t"] = BaseType("t", np.arange(4), units="days since 1950-01-01", axis="T")
-    grid["y"] = BaseType(
-        "y", np.arange(48.0, 51.0, 1.0), units="degrees_north", axis="Y"
-    )
-    grid["x"] = BaseType(
-        "x", np.arange(-122.0, -123.5, -0.5), units="degrees_east", axis="X"
-    )
-    dst["my_grid"] = grid
-    return dst
-
-
-@pytest.fixture
-def four_dimension_dataset():
-    dst = DatasetType("my_dataset")
-    grid = GridType("my_grid")
-    grid["my_var"] = BaseType(
-        "my_var", np.arange(24).reshape(2, 3, 2, 2), dimensions=("y", "x", "z", "t")
-    )
-    grid["y"] = BaseType("y", np.arange(2), axis="Y")
-    grid["x"] = BaseType("x", np.arange(3), axis="X")
-    grid["z"] = BaseType("z", np.arange(2))
-    grid["t"] = BaseType("t", np.arange(2))
-    dst["my_grid"] = grid
-    return dst
-
-
-@pytest.fixture(scope="function")
-def temp_file(request):
-    f = NamedTemporaryFile(delete=False)
-
-    def fin():
-        os.remove(f.name)
-
-    request.addfinalizer(fin)
-
-    return f
-
-
-@pytest.fixture
-def real_data_test():
-    test_h5 = resource_filename("tests", "data/bcca_canada.h5")
-    return HDF5Handler(test_h5)
