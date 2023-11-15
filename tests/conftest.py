@@ -125,34 +125,59 @@ def testdb(request):
 
 
 @pytest.fixture(scope="session")
-def engine():
-    """Test-session-wide database engine"""
+def schema_name():
+    return pycds.get_schema_name()
+
+
+@pytest.fixture(scope="session")
+def database_uri():
     with testing.postgresql.Postgresql() as pg:
-        engine = create_engine(pg.url())
-        engine.execute("create extension postgis")
-        engine.execute(CreateSchema("crmp"))
-        pycds.Base.metadata.create_all(bind=engine)
-        yield engine
+        yield pg.url()
+
+
+def initialize_database(engine, schema_name):
+    """Initialize an empty database"""
+    # Add role required by PyCDS migrations for privileged operations.
+    engine.execute(f"CREATE ROLE {pycds.get_su_role_name()} WITH SUPERUSER NOINHERIT;")
+    # Add extensions required by PyCDS.
+    engine.execute("CREATE EXTENSION postgis")
+    engine.execute("CREATE EXTENSION plpython3u")
+    engine.execute("CREATE EXTENSION IF NOT EXISTS citext")
+    # Add schema.
+    engine.execute(CreateSchema(schema_name))
+
+
+@pytest.fixture(scope="session")
+def engine(database_uri, schema_name):
+    """Session-wide database engine"""
+    print("### engine: creating at", database_uri)
+    engine = create_engine(database_uri)
+    initialize_database(engine, schema_name)
+    print("### engine: ready")
+    yield engine
 
 
 @pytest.fixture(scope="function")
 def session(engine):
     """Single-test database session. All session actions are rolled back on teardown"""
     session = sessionmaker(bind=engine)()
-    # Default search path is `"$user", public`. Need to reset that to search crmp (for our db/orm content) and
-    # public (for postgis functions)
+    # Default search path is `"$user", public`. Need to reset that to search crmp
+    # (for our db/orm content) and public (for postgis functions)
     session.execute("SET search_path TO crmp, public")
     yield session
     session.rollback()
     session.close()
 
 
+# TODO: Fold this under the database_uri -> engine -> session cascade if possible;
+#   don't create a new db unless it is for some reason necessary.
+#   Note this fixture has "function" scope. The `session` fixture has "session" scope.
+#   This scope difference may be the reason for the separate setups.
 @pytest.fixture(scope="function")
-def blank_postgis_session():
+def blank_postgis_session(schema_name):
     with testing.postgresql.Postgresql() as pg:
         engine = create_engine(pg.url())
-        engine.execute("create extension postgis")
-        engine.execute(CreateSchema("crmp"))
+        initialize_database(engine, schema_name)
         sesh = sessionmaker(bind=engine)()
 
         yield sesh
