@@ -159,7 +159,8 @@ def engine(database_uri, schema_name):
     yield engine
 
 
-# TODO: rename empty_session. "postgis" is implicit, I think
+# TODO: There appears to be no use for this apart from being an intermediary for
+#   the ill-named test_session. Fold together.
 @pytest.fixture(scope="function")
 def blank_postgis_session(engine):
     """Single-test database session. All session actions are rolled back on teardown"""
@@ -178,7 +179,7 @@ def blank_postgis_session(engine):
 # TODO: Rename with more explanatory name, e.g., session_with_tables
 #   Note: This is the natural place to do migration once we get there.
 @pytest.fixture(scope="function")
-def test_session(blank_postgis_session):
+def pycds_session(blank_postgis_session):  # Replace with pycds_session
 
     engine = blank_postgis_session.get_bind()
     pycds.Base.metadata.create_all(bind=engine)
@@ -186,9 +187,18 @@ def test_session(blank_postgis_session):
     yield blank_postgis_session
 
 
+# @pytest.fixture(scope="function")
+# def pycds_session(engine):
+#     pycds.Base.metadata.create_all(bind=engine)
+#     # NOTE: This is the natural place to do migration once we get there.
+#     Session = sessionmaker(bind=engine)
+#     with Session() as session:
+#         yield session
+
+
 @pytest.fixture(scope="function")
-def test_db_with_variables(test_session):
-    sesh = test_session
+def test_db_with_variables(pycds_session):
+    sesh = pycds_session
 
     moti = Network(
         **TestNetwork(
@@ -299,12 +309,12 @@ def test_db_with_met_obs(test_db_with_variables):
 
 
 @pytest.fixture(scope="function")
-def session_with_duplicate_station(test_session):
+def session_with_duplicate_station(pycds_session):
     """In 0.0.5, if there's bad data in the database where there's a spurrious station
     without a corresponding history_id, it gets selected first and then the
     metadata request fails. Construct a test database to test for this.
     """
-    s = test_session
+    s = pycds_session
 
     ecraw = Network(name="EC_raw")
     station0 = Station(native_id="1106200", network=ecraw, histories=[])
@@ -317,8 +327,8 @@ def session_with_duplicate_station(test_session):
 
 
 @pytest.fixture(scope="function")
-def session_with_multiple_hist_ids_for_one_station(test_session):
-    s = test_session
+def session_with_multiple_hist_ids_for_one_station(pycds_session):
+    s = pycds_session
 
     net = Network(name="test_network")
     history0 = History(
@@ -344,8 +354,8 @@ def session_with_multiple_hist_ids_for_one_station(test_session):
 
 
 @pytest.fixture(scope="function")
-def session_multiple_hist_ids_null_dates(test_session):
-    s = test_session
+def session_multiple_hist_ids_null_dates(pycds_session):
+    s = pycds_session
 
     net = Network(name="test_network")
     history0 = History(station_name="Some station", elevation=999)
