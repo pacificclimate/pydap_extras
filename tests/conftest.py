@@ -277,23 +277,7 @@ def test_db_with_variables(pycds_session):
     sesh.commit()
 
     sesh.execute(VarsPerHistory.refresh())
-    sesh.commit()  # Necessary?
-
-    q = sesh.query(Station)
-    print("###3 conftest Station all", [f"{str(x)}({x.id})" for x in q.all()])
-    q = sesh.query(History)
-    print(
-        "### conftest History all",
-        [
-            f"Hx(id={x.id} station_id={x.station_id} station_name={x.station_name})"
-            for x in q.all()
-        ],
-    )
-    q = sesh.query(VarsPerHistory)
-    print(
-        "### conftest VarsPerHistory all",
-        [f"VPH(vars_id={x.vars_id}, history_id={x.history_id})" for x in q.all()],
-    )
+    sesh.commit()
 
     yield sesh
 
