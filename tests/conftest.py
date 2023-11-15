@@ -79,27 +79,35 @@ def simple_dataset():
     return dataset
 
 
-# TODO: Why SQLite? We already use PG for a lot of other tests. Fold into
-#   database_uri -> engine cascade
-@pytest.fixture
-def testdb(request):
-    with NamedTemporaryFile("w", delete=False) as f:
-        engine = create_engine("sqlite:///" + f.name, echo=True)
-        engine.execute("CREATE TABLE mytable (foo INTEGER, bar VARCHAR(50));")
-        engine.execute("INSERT INTO mytable (foo, bar) VALUES (1, 'hello world');")
-        fname = f.name
+@pytest.fixture(scope="session")
+def schema_name():
+    return pycds.get_schema_name()
 
-    def fin():
-        os.remove(fname)
 
-    request.addfinalizer(fin)
-    return fname
+@pytest.fixture(scope="function")  # TODO: Can scope be broader?
+def database_uri():
+    """URI of test PG database"""
+    with testing.postgresql.Postgresql() as pg:
+        yield pg.url()
 
 
 @pytest.fixture
-def testconfig(testdb, request):
+def base_engine(database_uri):
+    """Plain vanilla database engine, with nothing added."""
+    yield create_engine(database_uri)
+
+
+@pytest.fixture
+def testdb(base_engine):
+    base_engine.execute("CREATE TABLE mytable (foo INTEGER, bar VARCHAR(50));")
+    base_engine.execute("INSERT INTO mytable (foo, bar) VALUES (1, 'hello world');")
+    yield base_engine
+
+
+@pytest.fixture
+def testconfig(testdb, database_uri):
     config = f"""database:
-  dsn: "sqlite:///{testdb}"
+  dsn: "{database_uri}"
   id: "mytable"
   table: "mytable"
 
@@ -114,27 +122,10 @@ foo:
   col: "foo"
   type: Integer
 """
-
-    with NamedTemporaryFile("w", delete=False) as myconfig:
+    with NamedTemporaryFile("w") as myconfig:
         myconfig.write(config)
-        fname = myconfig.name
-
-    def fin():
-        os.remove(fname)
-
-    request.addfinalizer(fin)
-    return fname
-
-
-@pytest.fixture(scope="session")
-def schema_name():
-    return pycds.get_schema_name()
-
-
-@pytest.fixture(scope="function")  # TODO: Can scope be broader?
-def database_uri():
-    with testing.postgresql.Postgresql() as pg:
-        yield pg.url()
+        myconfig.flush()
+        yield myconfig.name
 
 
 def initialize_database(engine, schema_name):
