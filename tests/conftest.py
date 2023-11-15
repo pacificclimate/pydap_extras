@@ -129,7 +129,7 @@ def schema_name():
     return pycds.get_schema_name()
 
 
-@pytest.fixture(scope="session")
+@pytest.fixture(scope="function")  # TODO: Can scope be broader?
 def database_uri():
     with testing.postgresql.Postgresql() as pg:
         yield pg.url()
@@ -147,7 +147,7 @@ def initialize_database(engine, schema_name):
     engine.execute(CreateSchema(schema_name))
 
 
-@pytest.fixture(scope="session")
+@pytest.fixture(scope="function")  # TODO: Can scope be broader?
 def engine(database_uri, schema_name):
     """Session-wide database engine"""
     print("### engine: creating at", database_uri)
@@ -157,32 +157,24 @@ def engine(database_uri, schema_name):
     yield engine
 
 
+# TODO: rename empty_session. "postgis" is implicit, I think
 @pytest.fixture(scope="function")
-def session(engine):
+def blank_postgis_session(engine):
     """Single-test database session. All session actions are rolled back on teardown"""
+    # TODO: Use context manager instead
     session = sessionmaker(bind=engine)()
     # Default search path is `"$user", public`. Need to reset that to search crmp
     # (for our db/orm content) and public (for postgis functions)
-    session.execute("SET search_path TO crmp, public")
+    # session.execute("SET search_path TO crmp, public")
+
     yield session
-    session.rollback()
-    session.close()
+
+    # session.rollback()
+    # session.close()
 
 
-# TODO: Fold this under the database_uri -> engine -> session cascade if possible;
-#   don't create a new db unless it is for some reason necessary.
-#   Note this fixture has "function" scope. The `session` fixture has "session" scope.
-#   This scope difference may be the reason for the separate setups.
-@pytest.fixture(scope="function")
-def blank_postgis_session(schema_name):
-    with testing.postgresql.Postgresql() as pg:
-        engine = create_engine(pg.url())
-        initialize_database(engine, schema_name)
-        sesh = sessionmaker(bind=engine)()
-
-        yield sesh
-
-
+# TODO: Rename with more explanatory name, e.g., session_with_tables
+#   Note: This is the natural place to do migration once we get there.
 @pytest.fixture(scope="function")
 def test_session(blank_postgis_session):
 
