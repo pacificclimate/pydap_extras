@@ -14,6 +14,12 @@ from sqlalchemy import create_engine
 from sqlalchemy.orm import sessionmaker
 from sqlalchemy.schema import CreateSchema
 
+from alembic.config import Config
+from alembic import command
+import alembic.config
+import alembic.command
+import pycds.alembic
+
 import h5py
 import pycds
 import numpy as np
@@ -146,10 +152,41 @@ def pycds_engine(base_engine, database_uri, schema_name):
     yield base_engine
 
 
+@pytest.fixture(scope="package")
+def alembic_script_location():
+    """
+    This fixture extracts the filepath to the installed pycds Alembic content.
+    The filepath is typically like
+    `/usr/local/lib/python3.6/dist-packages/pycds/alembic`.
+    """
+    try:
+        import importlib_resources
+        source = importlib_resources.files(pycds.alembic)
+    except ModuleNotFoundError:
+        import importlib.resources
+        if hasattr(importlib.resources, 'files'):
+            source = importlib.resources.files(pycds.alembic)
+        else:
+            with importlib.resources.path("pycds", "alembic") as path:
+                source = path
+
+    yield str(source)
+
+
+def migrate_database(script_location, database_uri, revision="head"):
+    """
+    Migrate a database to a specified revision using Alembic.
+    This requires a privileged role to be added in advance to the database.
+    """
+    alembic_config = alembic.config.Config()
+    alembic_config.set_main_option("script_location", script_location)
+    alembic_config.set_main_option("sqlalchemy.url", database_uri)
+    alembic.command.upgrade(alembic_config, revision)
+
+
 @pytest.fixture(scope="function")
-def pycds_session(pycds_engine):
-    pycds.Base.metadata.create_all(bind=pycds_engine)
-    # NOTE: This is the natural place to do migration once we get there.
+def pycds_session(pycds_engine, alembic_script_location, database_uri):
+    migrate_database(alembic_script_location, database_uri)
     Session = sessionmaker(bind=pycds_engine)
     with Session() as session:
         yield session
