@@ -5,7 +5,7 @@ from pydap_extras.handlers.pcic import RawPcicSqlHandler, ClimoPcicSqlHandler
 
 
 @pytest.mark.parametrize(
-    ("input", "expected"),
+    ("handler", "expected"),
     [
         # Raw
         (
@@ -37,8 +37,8 @@ from pydap_extras.handlers.pcic import RawPcicSqlHandler, ClimoPcicSqlHandler
         ),
     ],
 )
-def test_get_vars(test_db_with_variables, input, expected):
-    assert set(input.get_vars(1, test_db_with_variables)) == set(expected)
+def test_get_vars(test_db_with_variables, handler, expected):
+    assert set(handler.get_vars(1, test_db_with_variables)) == set(expected)
 
 
 @pytest.mark.parametrize(
