@@ -28,7 +28,7 @@ TestNetwork = namedtuple("TestNetwork", "name long_name color")
 
 
 @pytest.fixture
-def handler():
+def netcdf_handler():
     fname = resource_filename("tests", "data/tiny_bccaq2_wo_recvars.nc")
     return NetCDFHandler(fname)
 
