@@ -1,7 +1,21 @@
-"""This module provides an Pydap handler which reads in-situ observations out of the BC Provincial Climate Data Set. It is implemented as a subclass of :class:`pydap.handlers.sql.Handler` (the Pydap SQL handlers). Since the Pydap SQL handler is written to use an on-disk config file for each dataset, this handlers generates the config file dynamically in memory and then uses it to instantiate the base class.
-The handler will configure a different dataset for each station based on the file path of the request. In general the file path is assumed to be ::
+"""
+This module provides a Pydap handler which reads in-situ observations from the BC
+Provincial Climate Data Set. It is implemented as a subclass of
+:class:`pydap.handlers.sql.Handler` (the Pydap SQL handlers). Since the Pydap SQL
+handler is written to use an on-disk config file for each dataset, this handler
+generates the config file dynamically in memory and then uses it to instantiate the
+base class.
+
+The handler configures a different dataset for each station based on the file
+path of the request. In general the file path is assumed to be ::
 .../(raw|climo)/[network_name]/[native_id]/
-Each dataset will contain a variety of global attributes such as the station and network names, latitude and longitide of the station and some contact information. Each dataset will contain one sequence named ``station_observations`` and some number of variables (including time) attached to that sequence. Each variable will be attributed with its name, long_name, CF standard_name, CF cell_method and the units.
+
+Each dataset contains a variety of global attributes such as the station and
+network names, latitude and longitide of the station and some contact information.
+
+Each dataset contains one sequence named ``station_observations`` and some number
+of variables (including time) attached to that sequence. Each variable will be
+attributed with its name, long_name, CF standard_name, CF cell_method and the units.
 """
 
 import os
@@ -103,9 +117,12 @@ class PcicSqlHandler(object):
         return response
 
     def create_ini(self, sesh, net_name, native_id):
-        """Creates the actual text of a pydap SQL handler config file and returns it as a StringIO. `self.filepath` should be set before this is called. It will typically be something like ``.../[network_name]/[native_id].rsql``. The database station_id is looked up from that.
+        """
+        Creates the text of a pydap SQL handler config file and returns it as a
+        StringIO. `self.filepath` should be set before this is called. It is typically
+        something like ``.../[network_name]/[native_id].rsql``. The database station_id
+        is looked up from that.
 
-        :param environ: WSGI environment which *must* contain a dsn string under the key pydap.handlers.pcic.dsn
         :rtype: StringIO.StringIO
         """
         q = (
@@ -248,12 +265,18 @@ class RawPcicSqlHandler(PcicSqlHandler):
     virtual = True
 
     def get_full_query(self, stn_id, sesh):
-        """Sends a special query to the database that actually retrieves generated SQL for constructing an observation table (time by variable) for a single station. The query needs to return at least one column (obs_time) with additional columns for each available variable, if any. Uses the ``query_one_station`` stored procedure.
+        """
+        Retrieves generated SQL for constructing an observation table (time by variable)
+        for a single station. The query needs to return at least one column (obs_time)
+        with additional columns for each available variable, if any. Uses the
+        ``query_one_station`` stored procedure.
+
         :param stn_id: the *database* station_id of the desired station
         :type stn_id: int or str
         :param sesh: a sqlalchemy session
         """
 
+        # TODO: What is this for? A comment at least would help.
         if not self.get_vars(stn_id, sesh):
             return "SELECT obs_time FROM obs_raw WHERE NULL"
 
@@ -292,7 +315,12 @@ class ClimoPcicSqlHandler(PcicSqlHandler):
     virtual = True
 
     def get_full_query(self, stn_id, sesh):
-        """Sends a special query to the database that actually retrieves generated SQL for constructing an observation table (time by variable) for a single station. Uses the ``query_one_station`` stored procedure.
+        """
+        Retrieves generated SQL for constructing an observation table (time by variable)
+        for a single station. The query needs to return at least one column (obs_time)
+        with additional columns for each available variable, if any. Uses the
+        ``query_one_station_climo`` stored procedure.
+
         :param stn_id: the *database* station_id of the desired station
         :type stn_id: int or str
         :param sesh: sqlalchemy session
