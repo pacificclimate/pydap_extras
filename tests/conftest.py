@@ -29,9 +29,6 @@ from pydap_extras.handlers.pcic import RawPcicSqlHandler
 from pydap_extras.handlers.hdf5 import Hdf5Data
 
 
-TestNetwork = namedtuple("TestNetwork", "name long_name color")
-
-
 @pytest.fixture
 def netcdf_handler():
     fname = resource_filename("tests", "data/tiny_bccaq2_wo_recvars.nc")
@@ -198,12 +195,14 @@ def test_db_with_variables(pycds_session):
     sesh = pycds_session
 
     nw_moti = Network(
-        **TestNetwork(
-            "MoTI", "Ministry of Transportation and Infrastructure", "000000"
-        )._asdict()
+        name="MoTI",
+        long_name="Ministry of Transportation and Infrastructure",
+        color="000000",
     )
     nw_moe = Network(
-        **TestNetwork("MoE", "Ministry of Environment", "000000")._asdict()
+        name="MoE",
+        long_name="Ministry of Environment",
+        color="000000",
     )
     sesh.add_all([nw_moti, nw_moe])
 
