@@ -141,20 +141,16 @@ def initialize_database(engine, schema_name):
 
 
 @pytest.fixture(scope="function")  # TODO: Can scope be broader?
-def engine(database_uri, schema_name):
-    """Session-wide database engine"""
-    print("### engine: creating at", database_uri)
-    engine = create_engine(database_uri)
-    initialize_database(engine, schema_name)
-    print("### engine: ready")
-    yield engine
+def pycds_engine(base_engine, database_uri, schema_name):
+    initialize_database(base_engine, schema_name)
+    yield base_engine
 
 
 @pytest.fixture(scope="function")
-def pycds_session(engine):
-    pycds.Base.metadata.create_all(bind=engine)
+def pycds_session(pycds_engine):
+    pycds.Base.metadata.create_all(bind=pycds_engine)
     # NOTE: This is the natural place to do migration once we get there.
-    Session = sessionmaker(bind=engine)
+    Session = sessionmaker(bind=pycds_engine)
     with Session() as session:
         yield session
 
