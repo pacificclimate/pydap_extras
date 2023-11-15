@@ -159,41 +159,13 @@ def engine(database_uri, schema_name):
     yield engine
 
 
-# TODO: There appears to be no use for this apart from being an intermediary for
-#   the ill-named test_session. Fold together.
 @pytest.fixture(scope="function")
-def blank_postgis_session(engine):
-    """Single-test database session. All session actions are rolled back on teardown"""
-    # TODO: Use context manager instead
-    session = sessionmaker(bind=engine)()
-    # Default search path is `"$user", public`. Need to reset that to search crmp
-    # (for our db/orm content) and public (for postgis functions)
-    # session.execute("SET search_path TO crmp, public")
-
-    yield session
-
-    # session.rollback()
-    # session.close()
-
-
-# TODO: Rename with more explanatory name, e.g., session_with_tables
-#   Note: This is the natural place to do migration once we get there.
-@pytest.fixture(scope="function")
-def pycds_session(blank_postgis_session):  # Replace with pycds_session
-
-    engine = blank_postgis_session.get_bind()
+def pycds_session(engine):
     pycds.Base.metadata.create_all(bind=engine)
-
-    yield blank_postgis_session
-
-
-# @pytest.fixture(scope="function")
-# def pycds_session(engine):
-#     pycds.Base.metadata.create_all(bind=engine)
-#     # NOTE: This is the natural place to do migration once we get there.
-#     Session = sessionmaker(bind=engine)
-#     with Session() as session:
-#         yield session
+    # NOTE: This is the natural place to do migration once we get there.
+    Session = sessionmaker(bind=engine)
+    with Session() as session:
+        yield session
 
 
 @pytest.fixture(scope="function")
