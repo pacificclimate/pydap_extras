@@ -9,7 +9,6 @@ import os
 from tempfile import NamedTemporaryFile
 
 import testing.postgresql
-from pycds.util import *
 from sqlalchemy import create_engine
 from sqlalchemy.orm import sessionmaker
 from sqlalchemy.schema import CreateSchema
