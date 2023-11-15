@@ -10,15 +10,25 @@ from tempfile import NamedTemporaryFile
 from contextlib import contextmanager
 import logging
 
-from sqlalchemy import or_, not_, func
+from sqlalchemy import func, text
+from sqlalchemy.dialects.postgresql import array, ARRAY, TEXT
 from sqlalchemy.orm import sessionmaker
 from paste.httpexceptions import HTTPNotFound
 from geoalchemy2.functions import ST_X, ST_Y
 
 from pydap_extras.handlers.sql import SQLHandler, Engines
-from pycds import *
+from pycds import get_schema_name, Network, Variable, Station, History, VarsPerHistory
 
 logger = logging.getLogger(__name__)
+
+schema_name = get_schema_name()
+schema_func = getattr(func, schema_name)  # Explicitly specify schema of function
+# This query fragment invokes the user-defined database function `variable_tags` on the
+# `Variable` table. It is used in a couple of queries below.
+variable_tags = schema_func.variable_tags(
+    text(Variable.__tablename__), type_=ARRAY(TEXT)
+)
+
 
 # From http://docs.sqlalchemy.org/en/rel_0_9/orm/session.html#session-faq-whentocreate
 @contextmanager
@@ -37,7 +47,10 @@ def session_scope(dsn):
 
 
 class PcicSqlHandler(object):
-    """A Pydap handler which reads in-situ observations from the BC Provincial Climate Data Set."""
+    """
+    A Pydap handler which reads in-situ observations from the BC Provincial Climate
+    Data Set.
+    """
 
     extensions = re.compile(r"^.*\.psql$", re.IGNORECASE)
 
@@ -50,11 +63,14 @@ class PcicSqlHandler(object):
         self.session_scope_factory = session_scope_factory
 
         if sesh:
-            # Stash a copy of our engine in pydap.handlers.sql so that it will use it for data queries
+            # Stash a copy of our engine in pydap.handlers.sql so that it will use it
+            # for data queries
             Engines[self.dsn] = sesh.get_bind()
 
     def __call__(self, environ, start_response):
-        """:param environ: WSGI environment such that PATH_INFO is set to something that matches the pattern /[network_name]/[native_id].sql.[response]
+        """
+        :param environ: WSGI environment such that PATH_INFO is set to something
+        that matches the pattern /[network_name]/[native_id].sql.[response]
         :rtype: iterable WSGI response
         """
         filepath = environ.get("PATH_INFO")
@@ -130,7 +146,9 @@ class PcicSqlHandler(object):
         else:
             if q.count() > 1:
                 logger.warning(
-                    "Multiple history entries (ids {}) were found for a single station_id, but we're reporting locations for the most recent".format(
+                    # TODO: Is the arg to `format` a bug?
+                    "Multiple history entries (ids {}) were found for a single "
+                    "station_id, but we're reporting locations for the most recent".format(
                         []
                     )
                 )
@@ -142,9 +160,8 @@ class PcicSqlHandler(object):
                 # This should never happen
                 if not sdate:
                     raise ValueError(
-                        "Found multiple history entries for station_id {}, but none have a valid record start date!".format(
-                            station_id
-                        )
+                        "Found multiple history entries for station_id {}, "
+                        "but none have a valid record start date!".format(station_id)
                     )
                 q = q.filter(History.sdate == sdate)
 
@@ -222,6 +239,7 @@ time:
         raise NotImplementedError
 
 
+# TODO: RawPcicSqlHandler and ClimoPcicSqlHandler are very very similar. DRY up?
 class RawPcicSqlHandler(PcicSqlHandler):
     """Subclass of PcicSqlHandler which handles the raw observations"""
 
@@ -233,7 +251,7 @@ class RawPcicSqlHandler(PcicSqlHandler):
         """Sends a special query to the database that actually retrieves generated SQL for constructing an observation table (time by variable) for a single station. The query needs to return at least one column (obs_time) with additional columns for each available variable, if any. Uses the ``query_one_station`` stored procedure.
         :param stn_id: the *database* station_id of the desired station
         :type stn_id: int or str
-        :param sesh: an sqlalchemy session
+        :param sesh: a sqlalchemy session
         """
 
         if not self.get_vars(stn_id, sesh):
@@ -243,22 +261,15 @@ class RawPcicSqlHandler(PcicSqlHandler):
         return sesh.execute(query_string).fetchone()[0]
 
     def get_vars(self, stn_id, sesh):
-        """Makes a database query to retrieve all of the raw variables for a particular station"""
+        """Retrieves all raw (observation) variables for a particular station"""
         q = (
             sesh.query(Variable)
-            .join(VarsPerHistory)
-            .join(History)
-            .join(Station)
-            .join(Network)
+            .join(VarsPerHistory, VarsPerHistory.vars_id == Variable.id)
+            .join(History, History.id == VarsPerHistory.history_id)
+            .join(Station, Station.id == History.station_id)
+            .join(Network, Network.id == Station.network_id)  # Or join to Variable
             .filter(Station.id == stn_id)
-            .filter(
-                not_(
-                    or_(
-                        Variable.cell_method.like("%within%"),
-                        Variable.cell_method.like("%over%"),
-                    )
-                )
-            )
+            .filter(variable_tags.contains(array(["observation"])))
         )
         return [
             (
@@ -290,20 +301,15 @@ class ClimoPcicSqlHandler(PcicSqlHandler):
         return sesh.execute(query_string).first()[0]
 
     def get_vars(self, stn_id, sesh):
-        """Makes a database query to retrieve all of the climatological variables for a particular station"""
+        """Retrieves all climatological variables for a particular station"""
         q = (
             sesh.query(Variable)
-            .join(Network)
-            .join(Station)
-            .join(History)
-            .join(VarsPerHistory)
+            .join(VarsPerHistory, VarsPerHistory.vars_id == Variable.id)
+            .join(History, History.id == VarsPerHistory.history_id)
+            .join(Station, Station.id == History.station_id)
+            .join(Network, Network.id == Station.network_id)  # Or join to Variable
             .filter(Station.id == stn_id)
-            .filter(
-                or_(
-                    Variable.cell_method.like("%within%"),
-                    Variable.cell_method.like("%over%"),
-                )
-            )
+            .filter(variable_tags.contains(array(["climatology"])))
         )
 
         return [
