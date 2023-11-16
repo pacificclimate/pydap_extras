@@ -253,7 +253,34 @@ time:
         raise NotImplementedError
 
     def get_vars(self, stn_id, sesh):
-        raise NotImplementedError
+        """
+        Retrieves all variables of the specified type for a particular station.
+        The class variable `var_type` specifies the variable type. It must be given
+        a value in subclasses.
+        """
+        if not hasattr(self.__class__, "var_type"):
+            raise ValueError("This class must specify the class value 'var_type'")
+
+        q = (
+            sesh.query(Variable)
+            .join(VarsPerHistory, VarsPerHistory.vars_id == Variable.id)
+            .join(History, History.id == VarsPerHistory.history_id)
+            .join(Station, Station.id == History.station_id)
+            .join(Network, Network.id == Station.network_id)  # Or join to Variable
+            .filter(Station.id == stn_id)
+            .filter(variable_tags.contains(array([self.__class__.var_type])))
+        )
+        return [
+            (
+                x.name,
+                x.unit,
+                x.standard_name,
+                x.cell_method,
+                x.description,
+                x.display_name,
+            )
+            for x in q.all()
+        ]
 
 
 # TODO: RawPcicSqlHandler and ClimoPcicSqlHandler are very very similar. DRY up?
@@ -263,6 +290,7 @@ class RawPcicSqlHandler(PcicSqlHandler):
     extensions = re.compile(r"^.*\.rsql$", re.IGNORECASE)
     suffix = ".rsql"
     virtual = True
+    var_type = "observation"
 
     def get_full_query(self, stn_id, sesh):
         """
@@ -283,29 +311,6 @@ class RawPcicSqlHandler(PcicSqlHandler):
         query_string = "SELECT query_one_station(%s)" % stn_id
         return sesh.execute(query_string).fetchone()[0]
 
-    def get_vars(self, stn_id, sesh):
-        """Retrieves all raw (observation) variables for a particular station"""
-        q = (
-            sesh.query(Variable)
-            .join(VarsPerHistory, VarsPerHistory.vars_id == Variable.id)
-            .join(History, History.id == VarsPerHistory.history_id)
-            .join(Station, Station.id == History.station_id)
-            .join(Network, Network.id == Station.network_id)  # Or join to Variable
-            .filter(Station.id == stn_id)
-            .filter(variable_tags.contains(array(["observation"])))
-        )
-        return [
-            (
-                x.name,
-                x.unit,
-                x.standard_name,
-                x.cell_method,
-                x.description,
-                x.display_name,
-            )
-            for x in q.all()
-        ]
-
 
 class ClimoPcicSqlHandler(PcicSqlHandler):
     """Subclass of PcicSqlHandler which handles the climatological observations"""
@@ -313,6 +318,7 @@ class ClimoPcicSqlHandler(PcicSqlHandler):
     extensions = re.compile(r"^.*\.csql$", re.IGNORECASE)
     suffix = ".csql"
     virtual = True
+    var_type = "climatology"
 
     def get_full_query(self, stn_id, sesh):
         """
@@ -327,27 +333,3 @@ class ClimoPcicSqlHandler(PcicSqlHandler):
         """
         query_string = "SELECT query_one_station_climo(%s)" % stn_id
         return sesh.execute(query_string).first()[0]
-
-    def get_vars(self, stn_id, sesh):
-        """Retrieves all climatological variables for a particular station"""
-        q = (
-            sesh.query(Variable)
-            .join(VarsPerHistory, VarsPerHistory.vars_id == Variable.id)
-            .join(History, History.id == VarsPerHistory.history_id)
-            .join(Station, Station.id == History.station_id)
-            .join(Network, Network.id == Station.network_id)  # Or join to Variable
-            .filter(Station.id == stn_id)
-            .filter(variable_tags.contains(array(["climatology"])))
-        )
-
-        return [
-            (
-                x.name,
-                x.unit,
-                x.standard_name,
-                x.cell_method,
-                x.description,
-                x.display_name,
-            )
-            for x in q.all()
-        ]
