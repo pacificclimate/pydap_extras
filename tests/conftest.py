@@ -69,7 +69,7 @@ def simple_data_file(tmpdir_factory, simple_data):
     return temp_file
 
 
-@pytest.fixture
+@pytest.fixture(scope="session")
 def simple_dataset():
     dataset = DatasetType("VerySimpleSequence")
     dataset["sequence"] = SequenceType("sequence")
@@ -98,27 +98,27 @@ def schema_name():
     return pycds.get_schema_name()
 
 
-@pytest.fixture(scope="function")  # TODO: Can scope be broader?
+@pytest.fixture(scope="session")
 def database_uri():
     """URI of test PG database"""
     with testing.postgresql.Postgresql() as pg:
         yield pg.url()
 
 
-@pytest.fixture
+@pytest.fixture(scope="session")
 def base_engine(database_uri):
     """Plain vanilla database engine, with nothing added."""
     yield create_engine(database_uri)
 
 
-@pytest.fixture
+@pytest.fixture(scope="session")
 def testdb(base_engine):
     base_engine.execute("CREATE TABLE mytable (foo INTEGER, bar VARCHAR(50));")
     base_engine.execute("INSERT INTO mytable (foo, bar) VALUES (1, 'hello world');")
     yield base_engine
 
 
-@pytest.fixture
+@pytest.fixture(scope="session")
 def testconfig(testdb, database_uri):
     config = f"""database:
   dsn: "{database_uri}"
@@ -154,13 +154,13 @@ def initialize_database(engine, schema_name):
     engine.execute(CreateSchema(schema_name))
 
 
-@pytest.fixture(scope="function")  # TODO: Can scope be broader?
+@pytest.fixture(scope="session")
 def pycds_engine(base_engine, database_uri, schema_name):
     initialize_database(base_engine, schema_name)
     yield base_engine
 
 
-@pytest.fixture(scope="package")
+@pytest.fixture(scope="session")
 def alembic_script_location():
     """
     This fixture extracts the filepath to the installed pycds Alembic content.
@@ -194,7 +194,7 @@ def migrate_database(script_location, database_uri, revision="head"):
     alembic.command.upgrade(alembic_config, revision)
 
 
-@pytest.fixture(scope="function")
+@pytest.fixture(scope="session")
 def pycds_session(pycds_engine, alembic_script_location, database_uri):
     migrate_database(alembic_script_location, database_uri)
     Session = sessionmaker(bind=pycds_engine)
@@ -202,7 +202,7 @@ def pycds_session(pycds_engine, alembic_script_location, database_uri):
         yield session
 
 
-@pytest.fixture(scope="function")
+@pytest.fixture(scope="session")
 def test_db_with_variables(pycds_session):
     sesh = pycds_session
 
@@ -301,7 +301,7 @@ def ObsMaker(*args):
     return Obs(**ObsTuple(*args)._asdict())
 
 
-@pytest.fixture(scope="function")
+@pytest.fixture(scope="session")
 def test_db_with_met_obs(test_db_with_variables):
     sesh = test_db_with_variables
 
@@ -322,7 +322,7 @@ def test_db_with_met_obs(test_db_with_variables):
     yield sesh
 
 
-@pytest.fixture(scope="function")
+@pytest.fixture(scope="session")
 def session_with_duplicate_station(pycds_session):
     """In 0.0.5, if there's bad data in the database where there's a spurrious station
     without a corresponding history_id, it gets selected first and then the
@@ -340,7 +340,7 @@ def session_with_duplicate_station(pycds_session):
     yield s
 
 
-@pytest.fixture(scope="function")
+@pytest.fixture(scope="session")
 def session_with_multiple_hist_ids_for_one_station(pycds_session):
     s = pycds_session
 
@@ -367,11 +367,12 @@ def session_with_multiple_hist_ids_for_one_station(pycds_session):
     yield s
 
 
-@pytest.fixture(scope="function")
+@pytest.fixture(scope="session")
 def session_multiple_hist_ids_null_dates(pycds_session):
     s = pycds_session
 
-    net = Network(name="test_network")
+    # We must not reuse network names! Because all fixture scopes are session.
+    net = Network(name="test_network_B")
     history0 = History(station_name="Some station", elevation=999)
     history1 = History(station_name="The same station", elevation=999)
     station0 = Station(
@@ -384,9 +385,8 @@ def session_multiple_hist_ids_null_dates(pycds_session):
 
 
 @pytest.fixture(scope="function")
-def raw_handler(monkeypatch, test_db_with_met_obs):
-    conn_params = test_db_with_met_obs.get_bind()
-    handler = RawPcicSqlHandler(conn_params, test_db_with_met_obs)
+def raw_handler(monkeypatch, pycds_engine, pycds_session):
+    handler = RawPcicSqlHandler(pycds_engine, pycds_session)
 
     def my_get_full_query(self, stn_id, sesh):
         return "SELECT * FROM crmp.obs_raw"
@@ -419,14 +419,14 @@ def test_h5(pkg_file_root):
     return pkg_file_root("tests")  / "data" / "test.h5"
 
 
-@pytest.fixture(scope="function", params=["/tasmax", "/tasmin", "/pr"])
+@pytest.fixture(scope="session", params=["/tasmax", "/tasmin", "/pr"])
 def hdf5data_instance_3d(request, test_h5):
     f = h5py.File(test_h5, "r")
     dst = f[request.param]
     return Hdf5Data(dst)
 
 
-@pytest.fixture(scope="module", params=["/lat", "/lon", "/time"])
+@pytest.fixture(scope="session", params=["/lat", "/lon", "/time"])
 def hdf5data_instance_1d(request, test_h5):
     f = h5py.File(test_h5, "r")
     dst = f[request.param]
@@ -435,7 +435,7 @@ def hdf5data_instance_1d(request, test_h5):
 
 # _All_ the variables should be iterable
 @pytest.fixture(
-    scope="module", params=["/tasmax", "/tasmin", "/pr", "/lat", "/lon", "/time"]
+    scope="session", params=["/tasmax", "/tasmin", "/pr", "/lat", "/lon", "/time"]
 )
 def hdf5data_iterable(request, test_h5):
     f = h5py.File(test_h5, "r")

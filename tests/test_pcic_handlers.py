@@ -183,7 +183,7 @@ def test_handles_missing_sdates(
 
     with pytest.raises(ValueError) as excinfo:
         raw_handler.create_ini(
-            session_multiple_hist_ids_null_dates, "test_network", "some_station"
+            session_multiple_hist_ids_null_dates, "test_network_B", "some_station"
         )
 
     assert "multiple history entries" in str(excinfo.value)
