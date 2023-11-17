@@ -1,7 +1,6 @@
 from collections import namedtuple
 from datetime import datetime
-
-from pkg_resources import resource_filename
+import importlib.resources
 
 import pytest
 import csv
@@ -25,13 +24,26 @@ import numpy as np
 from pycds import *
 from pydap.model import DatasetType, BaseType, SequenceType
 from pydap.handlers.netcdf import NetCDFHandler
+import pydap_extras
 from pydap_extras.handlers.pcic import RawPcicSqlHandler
 from pydap_extras.handlers.hdf5 import Hdf5Data
 
 
+@pytest.fixture(scope="session")
+def pkg_file_root():
+    def f(package):
+        """
+        Returns a Path object that is the root of the package's "file system".
+        Additional path elements can be appended with the "/" operator.
+        """
+        with importlib.resources.path(package, "") as root:
+            return root
+
+    return f
+
 @pytest.fixture
-def netcdf_handler():
-    fname = resource_filename("tests", "data/tiny_bccaq2_wo_recvars.nc")
+def netcdf_handler(pkg_file_root):
+    fname = pkg_file_root("tests") / "data" / "tiny_bccaq2_wo_recvars.nc"
     return NetCDFHandler(fname)
 
 
@@ -402,18 +414,20 @@ def raw_handler_get_vars_mock(monkeypatch, test_db_with_met_obs):
     return handler
 
 
-test_h5 = resource_filename("tests", "data/test.h5")
+@pytest.fixture(scope="session")
+def test_h5(pkg_file_root):
+    return pkg_file_root("tests")  / "data" / "test.h5"
 
 
 @pytest.fixture(scope="function", params=["/tasmax", "/tasmin", "/pr"])
-def hdf5data_instance_3d(request):
+def hdf5data_instance_3d(request, test_h5):
     f = h5py.File(test_h5, "r")
     dst = f[request.param]
     return Hdf5Data(dst)
 
 
 @pytest.fixture(scope="module", params=["/lat", "/lon", "/time"])
-def hdf5data_instance_1d(request):
+def hdf5data_instance_1d(request, test_h5):
     f = h5py.File(test_h5, "r")
     dst = f[request.param]
     return Hdf5Data(dst)
@@ -423,7 +437,7 @@ def hdf5data_instance_1d(request):
 @pytest.fixture(
     scope="module", params=["/tasmax", "/tasmin", "/pr", "/lat", "/lon", "/time"]
 )
-def hdf5data_iterable(request):
+def hdf5data_iterable(request, test_h5):
     f = h5py.File(test_h5, "r")
     dst = f[request.param]
     return Hdf5Data(dst)
