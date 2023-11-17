@@ -9,7 +9,10 @@ version = "0.2.2"
 description = "PCIC Pydap handlers and Responses for Python 3"
 authors = ["Rod Glover <rglover@uvic.ca>"]
 readme = "README.md"
-packages = [{include = "pydap_extras"}]
+packages = [
+    {include = "pydap_extras"},
+    {include = "tests"},
+]
 
 [tool.poetry.dependencies]
 # TODO: Python 3.8 is due to go EOL in less than a year. numpy latest won't install
