@@ -146,12 +146,16 @@ class PcicSqlHandler(object):
                 Network.name,
                 History.the_geom,
                 History.elevation,
+                History.id,
             )
             .join(History)
             .join(Network)
             .filter(Station.id == station_id)
         )
-        if q.count() < 1:
+        # TODO: It may not matter, but these repeated queries for q.count(), q.all(),
+        #   and q.first() cause inefficient repeated round-trips to the database and
+        #   ought to be replaced with a single query to q.all().
+        if q.count() < 1:  # a.k.a. == 0
             native_id, station_name, network, lat, lon, elevation = (
                 native_id,
                 "",
@@ -163,10 +167,9 @@ class PcicSqlHandler(object):
         else:
             if q.count() > 1:
                 logger.warning(
-                    # TODO: Is the arg to `format` a bug?
                     "Multiple history entries (ids {}) were found for a single "
                     "station_id, but we're reporting locations for the most recent".format(
-                        []
+                        [x.id for x in q.all()]
                     )
                 )
                 (sdate,) = (
@@ -182,7 +185,7 @@ class PcicSqlHandler(object):
                     )
                 q = q.filter(History.sdate == sdate)
 
-            _, station_name, network, geom, elevation = q.first()
+            _, station_name, network, geom, elevation, _ = q.first()
             elevation = elevation if elevation else float("nan")
             lat, lon = (
                 (sesh.scalar(ST_Y(geom)), sesh.scalar(ST_X(geom)))
@@ -283,7 +286,6 @@ time:
         ]
 
 
-# TODO: RawPcicSqlHandler and ClimoPcicSqlHandler are very very similar. DRY up?
 class RawPcicSqlHandler(PcicSqlHandler):
     """Subclass of PcicSqlHandler which handles the raw observations"""
 
