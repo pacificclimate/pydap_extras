@@ -1,4 +1,3 @@
-from pkg_resources import resource_filename
 import numpy
 from webob.request import Request
 
@@ -75,8 +74,8 @@ def test_can_slice_a_sliced_dataset(hdf5data_instance_3d):
     assert subset.shape == (1, 10, 10)
 
 
-def test_the_bounds():
-    test_bounds = resource_filename("tests", "data/bounds.h5")
+def test_the_bounds(pkg_file_root):
+    test_bounds = pkg_file_root("tests")  / "data/bounds.h5"
     app = HDF5Handler(test_bounds)
     req = Request.blank("/bounds.nc.ascii?climatology_bounds")
     resp = req.get_response(app)

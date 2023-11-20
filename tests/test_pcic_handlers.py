@@ -5,7 +5,7 @@ from pydap_extras.handlers.pcic import RawPcicSqlHandler, ClimoPcicSqlHandler
 
 
 @pytest.mark.parametrize(
-    ("input", "expected"),
+    ("handler", "expected"),
     [
         # Raw
         (
@@ -37,8 +37,8 @@ from pydap_extras.handlers.pcic import RawPcicSqlHandler, ClimoPcicSqlHandler
         ),
     ],
 )
-def test_get_vars(test_db_with_variables, input, expected):
-    assert set(input.get_vars(1, test_db_with_variables)) == set(expected)
+def test_get_vars(test_db_with_variables, handler, expected):
+    assert set(handler.get_vars(1, test_db_with_variables)) == set(expected)
 
 
 @pytest.mark.parametrize(
@@ -183,7 +183,7 @@ def test_handles_missing_sdates(
 
     with pytest.raises(ValueError) as excinfo:
         raw_handler.create_ini(
-            session_multiple_hist_ids_null_dates, "test_network", "some_station"
+            session_multiple_hist_ids_null_dates, "test_network_B", "some_station"
         )
 
     assert "multiple history entries" in str(excinfo.value)

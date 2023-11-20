@@ -9,7 +9,10 @@ version = "0.2.2"
 description = "PCIC Pydap handlers and Responses for Python 3"
 authors = ["Rod Glover <rglover@uvic.ca>"]
 readme = "README.md"
-packages = [{include = "pydap_extras"}]
+packages = [
+    {include = "pydap_extras"},
+    {include = "tests"},
+]
 
 [tool.poetry.dependencies]
 # TODO: Python 3.8 is due to go EOL in less than a year. numpy latest won't install
@@ -28,9 +31,9 @@ numpy = "1.21"
 # TODO: Loosen version constraints where possible.
 netCDF4 = "^1.6.5"
 Pydap = "==3.2.2"
-pycds = { version = "==2.2.1",  source = "pcic-pypi" }
+pycds = { version = "==4.4.0",  source = "pcic-pypi" }
 requests = "==2.25.1"
-SQLAlchemy = "==1.4.3"
+SQLAlchemy = "^1.4.3"
 PyYAML = "==5.4.1"
 h5py = "==3.2.1"
 pupynere-pdp = { version = "==2.0.1",  source = "pcic-pypi" }
