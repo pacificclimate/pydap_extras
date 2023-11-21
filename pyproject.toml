@@ -5,7 +5,7 @@ priority = "supplemental"
 
 [tool.poetry]
 name = "pydap-extras"
-version = "0.2.2"
+version = "1.0.0"
 description = "PCIC Pydap handlers and Responses for Python 3"
 authors = ["Rod Glover <rglover@uvic.ca>"]
 readme = "README.md"

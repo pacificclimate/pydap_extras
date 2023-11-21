@@ -52,3 +52,17 @@ The app will run on port 8001.
 ```bash  
 poetry run python pydap_extras/app.py [filepath]
 ```
+
+## Releasing
+
+1. Modify `tool.poetry.version` in `pyproject.toml`.
+1. Summarize release changes in `NEWS.md`
+1. Commit these changes, then tag the release
+   ```bash
+   git add pyproject.toml NEWS.md
+   git commit -m"Bump to version X.Y.Z"
+   git tag -a -m"X.Y.Z" X.Y.Z
+   git push --follow-tags
+   ```
+1. Our GitHub Action `pypi-publish.yml` will build and release the package
+   on our PyPI server.
