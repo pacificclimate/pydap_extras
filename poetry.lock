@@ -1219,16 +1219,16 @@ testing = ["coverage", "pytest (>=3.1.0)", "pytest-cov", "pytest-xdist"]
 
 [[package]]
 name = "xlsxwriter"
-version = "1.3.8"
+version = "3.1.9"
 description = "A Python module for creating Excel XLSX files."
 optional = false
-python-versions = "*"
+python-versions = ">=3.6"
 files = [
-    {file = "XlsxWriter-1.3.8-py2.py3-none-any.whl", hash = "sha256:30ebc19d0f201fafa34a6c622050ed2a268ac8dee24037a61605caa801dc8af5"},
-    {file = "XlsxWriter-1.3.8.tar.gz", hash = "sha256:2b7e22b1268c2ed85d73e5629097c9a63357f2429667ada9863cd05ff8ee33aa"},
+    {file = "XlsxWriter-3.1.9-py3-none-any.whl", hash = "sha256:b61c1a0c786f82644936c0936ec96ee96cd3afb9440094232f7faef9b38689f0"},
+    {file = "XlsxWriter-3.1.9.tar.gz", hash = "sha256:de810bf328c6a4550f4ffd6b0b34972aeb7ffcf40f3d285a0413734f9b63a929"},
 ]
 
 [metadata]
 lock-version = "2.0"
 python-versions = "^3.8"
-content-hash = "e4f483a5b4f5d4e6d4ac6db5252a76492d7d0fbaea557ab303cedf662a07a8c9"
+content-hash = "0a590b52042bfc0b701bfb5488dcd29eadb708ea782be38d3a2ee7615ca6b5db"
