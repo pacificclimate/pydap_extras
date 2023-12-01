@@ -1,3 +1,4 @@
+import importlib.metadata
 from pydap_extras.responses.xlsx import XLSXResponse
 from pydap_extras.handlers.csv import CSVHandler
 from webob import Request
@@ -16,7 +17,7 @@ def test_XLSXResponse(simple_data_file):
         == "application/vnd.openxmlformats-officedocument.spreadsheetml.sheet"
     )
     assert response.headers == [
-        ("XDODS-Server", "pydap/3.2.2"),
+        ("XDODS-Server", f"pydap/{importlib.metadata.version('pydap')}"),
         ("Content-description", "dods_xlsx"),
         (
             "Content-type",

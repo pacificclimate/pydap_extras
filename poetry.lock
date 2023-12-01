@@ -798,13 +798,13 @@ reference = "pcic-pypi"
 
 [[package]]
 name = "pydap"
-version = "3.2.2"
+version = "3.4.1"
 description = "An implementation of the Data Access Protocol."
 optional = false
-python-versions = "*"
+python-versions = ">=3.7"
 files = [
-    {file = "Pydap-3.2.2-py3-none-any.whl", hash = "sha256:9655711d8da71192bda78fed15cbf4fc7fb1decc661ea5022263c0143648cf63"},
-    {file = "Pydap-3.2.2.tar.gz", hash = "sha256:86326642e24f421595a74b0f9986da76d7932b277768f501fe214d72592bdc40"},
+    {file = "pydap-3.4.1-py3-none-any.whl", hash = "sha256:a24cc3bc8c78089542699382bf650d57a055c82bb72c342fa7caa6618b9e4417"},
+    {file = "pydap-3.4.1.tar.gz", hash = "sha256:17c46087b53c6aec9bc5495a5d52aca19b2aa4b045f370b9f4b3a6058f5d8df7"},
 ]
 
 [package.dependencies]
@@ -812,17 +812,19 @@ beautifulsoup4 = "*"
 docopt = "*"
 Jinja2 = "*"
 numpy = "*"
+requests = "*"
 six = ">=1.4.0"
 Webob = "*"
 
 [package.extras]
-cas = ["lxml", "requests"]
+cas = ["lxml"]
 docs = ["Pygments", "Sphinx", "sphinx-rtd-theme"]
 functions = ["coards", "gsw (==3.0.6)"]
 handlers-netcdf = ["netCDF4", "ordereddict"]
+netcdf = ["netCDF4", "ordereddict"]
 server = ["PasteDeploy", "gunicorn"]
-testing = ["PasteDeploy", "WebTest", "beautifulsoup4", "coards", "flake8", "gsw (==3.0.6)", "gunicorn", "lxml", "mock", "netCDF4", "ordereddict", "pytest (>=2.8)", "pytest-attrib", "pytest-cov", "requests", "requests", "requests-mock"]
-tests = ["PasteDeploy", "WebTest", "beautifulsoup4", "coards", "flake8", "gsw (==3.0.6)", "gunicorn", "lxml", "netCDF4", "ordereddict", "requests"]
+testing = ["PasteDeploy", "WebTest", "beautifulsoup4", "coards", "flake8", "gsw (==3.0.6)", "gunicorn", "lxml", "netCDF4", "ordereddict", "pyopenssl", "pytest (>=3.6)", "pytest-attrib", "pytest-cov", "requests-mock", "werkzeug"]
+tests = ["WebTest", "beautifulsoup4", "flake8", "pyopenssl", "pytest (>=3.6)", "pytest-attrib", "pytest-cov", "requests-mock", "werkzeug"]
 
 [[package]]
 name = "pytest"
@@ -1331,4 +1333,4 @@ files = [
 [metadata]
 lock-version = "2.0"
 python-versions = "^3.8"
-content-hash = "4fea4bcf10836198e9012963f2f017f8a3a0aa3b7d73e8773e5771edf3719732"
+content-hash = "05607e11d0e55e57f5b743e1df58980da3b8bd00463633f1b8ea5325ef76ffc9"
