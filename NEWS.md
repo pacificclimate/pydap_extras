@@ -1,5 +1,11 @@
 # News / Release Notes
 
+## 1.1.0
+
+*Release Date: 30-November-2023*
+
+- [Update and loosen dependencies](https://github.com/pacificclimate/pydap-extras/pull/40)
+
 ## 1.0.0
 
 *Release Date: 21-November-2023*
