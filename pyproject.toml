@@ -7,18 +7,14 @@ priority = "supplemental"
 name = "pydap-extras"
 version = "1.0.0"
 description = "PCIC Pydap handlers and Responses for Python 3"
-authors = ["Rod Glover <rglover@uvic.ca>"]
+authors = [
+    "Rod Glover <rglover@uvic.ca>"
+]
 readme = "README.md"
 packages = [
     {include = "pydap_extras"},
     {include = "tests"},
 ]
-
-[tool.poetry.dependencies]
-# TODO: Python 3.8 is due to go EOL in less than a year. numpy latest won't install
-#   in Py 3.8. Consider upping to 3.9 or later.
-python = "^3.8"
-
 
 [tool.poetry.group.initial.dependencies]
 # These dependencies must be installed before those in any other groups,
@@ -27,7 +23,10 @@ pip = "22.3.1"
 setuptools = "<58"
 numpy = "<=1.21"  # Required by GDAL 3.0.4, but not declared in that package
 
-[tool.poetry.group.main.dependencies]
+[tool.poetry.dependencies]
+# TODO: Python 3.8 is due to go EOL in less than a year. numpy latest won't install
+#   in Py 3.8. Consider upping to 3.9 or later.
+python = "^3.8"
 gdal = "==3.0.4"
 Pydap = "^3.2.2"
 pycds = { version = "^4.4.0",  source = "pcic-pypi" }
