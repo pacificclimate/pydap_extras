@@ -25,20 +25,19 @@ python = "^3.8"
 # including the main dependencies.
 pip = "22.3.1"
 setuptools = "<58"
-numpy = "1.21"
+numpy = "<=1.21"  # Required by GDAL 3.0.4, but not declared in that package
 
 [tool.poetry.group.main.dependencies]
+gdal = "==3.0.4"
 Pydap = "^3.2.2"
 pycds = { version = "^4.4.0",  source = "pcic-pypi" }
+pupynere-pdp = { version = "^2.0.1",  source = "pcic-pypi" }
 requests = "^2.31.0"
 SQLAlchemy = "^1.4.3"
 PyYAML = "*"
 h5py = "^3.10.0"
-pupynere-pdp = { version = "^2.0.1",  source = "pcic-pypi" }
-XlsxWriter = "^3.1.9"
-numpy = "1.21"
-gdal = "==3.0.4"
 paste = "^3.7.1"
+XlsxWriter = "^3.1.9"
 
 [tool.poetry.group.test.dependencies]
 pytest = "^7.4.3"
