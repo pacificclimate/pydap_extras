@@ -31,7 +31,7 @@ numpy = "1.21"
 # TODO: Loosen version constraints where possible.
 netCDF4 = "^1.6.5"
 Pydap = "==3.2.2"
-pycds = { version = "==4.4.0",  source = "pcic-pypi" }
+pycds = { version = "^4.4.0",  source = "pcic-pypi" }
 requests = "^2.31.0"
 SQLAlchemy = "^1.4.3"
 PyYAML = "*"
