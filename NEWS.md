@@ -1,5 +1,11 @@
 # News / Release Notes
 
+## 1.1.1
+
+*Release Date: 13-Mar-2024*
+
+- [Remove unused and erroneous import of Iterators](https://github.com/pacificclimate/pydap-extras/pull/42)
+
 ## 1.1.0
 
 *Release Date: 30-November-2023*
