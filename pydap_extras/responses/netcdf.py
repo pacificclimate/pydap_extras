@@ -1,7 +1,6 @@
 import time
 
 from itertools import chain
-from collections import Iterator
 import logging
 from datetime import datetime
 from functools import reduce
