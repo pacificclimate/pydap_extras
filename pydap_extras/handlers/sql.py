@@ -32,6 +32,7 @@ example:
         global_range: [-180, 180]
         valid_range: !Query 'SELECT min(lon), max(lon) FROM test'
 """
+
 import sys
 import os
 import itertools
@@ -51,7 +52,7 @@ import numpy as np
 
 from pydap.model import *
 from pydap.lib import quote
-from pydap.handlers.lib import BaseHandler
+from pydap.handlers.lib import BaseHandler, ConstraintExpression
 from pydap.exceptions import OpenFileError, ConstraintExpressionError
 from pydap_extras.handlers.csv import CSVData
 
@@ -64,6 +65,7 @@ class EngineCreator(dict):
 
 
 Engines = EngineCreator()
+
 
 # From http://docs.sqlalchemy.org/en/rel_0_9/orm/session.html#session-faq-whentocreate
 @contextmanager
@@ -158,7 +160,7 @@ class SQLHandler(BaseHandler):
             seq[var] = BaseType(var, attributes=attrs)
 
         # set the data
-        seq.data = SQLData(config, seq.id, tuple(cols), dtypes, copy.copy(seq))
+        seq.data = SQLData(config, copy.copy(seq))
 
 
 class SQLData(CSVData):
@@ -180,7 +182,8 @@ class SQLData(CSVData):
         >>> out = c.executemany("INSERT INTO test VALUES (?, ?, ?)", data)
         >>> conn.commit()
         >>> c.close()
-    Iteraring over the sequence returns data:
+
+    And to retrieve data:
         >>> config = {
         ...     'database': { 'dsn': 'sqlite:///test.db', 'table': 'test', 'order': 'idx' },
         ...     'index': { 'col': 'idx' },
@@ -190,54 +193,58 @@ class SQLData(CSVData):
         >>> seq['index'] = BaseType('index')
         >>> seq['temperature'] = BaseType('temperature')
         >>> seq['site'] = BaseType('site')
-        >>> seq.data = SQLData(config, seq.id, ('index', 'temperature', 'site'),
-        ...     {'index': np.int32, 'temperature': np.float32, 'site': np.dtype('|S14')})
+        >>> seq.data = SQLData(config, seq)
+
+    Iteraring over the sequence returns data:
         >>> for line in seq:
-        ...     print line
+        ...     print(line)
         (10.0, 15.2, u'Diamond_St')
         (11.0, 13.1, u'Blacktail_Loop')
         (12.0, 13.3, u'Platinum_St')
         (13.0, 12.1, u'Kodiak_Trail')
         >>> for line in seq['temperature', 'site', 'index']:
-        ...     print line
+        ...     print(line)
         (15.2, u'Diamond_St', 10.0)
         (13.1, u'Blacktail_Loop', 11.0)
         (13.3, u'Platinum_St', 12.0)
         (12.1, u'Kodiak_Trail', 13.0)
+
     We can iterate over children:
         >>> for line in seq['temperature']:
-        ...     print line
+        ...     print(line)
         15.2
         13.1
         13.3
         12.1
+
     We can filter the data:
         >>> for line in seq[ seq.index > 10 ]:
-        ...     print line
+        ...     print(line)
         (11.0, 13.1, u'Blacktail_Loop')
         (12.0, 13.3, u'Platinum_St')
         (13.0, 12.1, u'Kodiak_Trail')
         >>> for line in seq[ seq.index > 10 ]['site']:
-        ...     print line
+        ...     print(line)
         Blacktail_Loop
         Platinum_St
         Kodiak_Trail
         >>> for line in seq['site', 'temperature'][ seq.index > 10 ]:
-        ...     print line
+        ...     print(line)
         (u'Blacktail_Loop', 13.1)
         (u'Platinum_St', 13.3)
         (u'Kodiak_Trail', 12.1)
+
     Or slice it:
         >>> for line in seq[::2]:
-        ...     print line
+        ...     print(line)
         (10.0, 15.2, u'Diamond_St')
         (12.0, 13.3, u'Platinum_St')
         >>> for line in seq[ seq.index > 10 ][::2]['site']:
-        ...     print line
+        ...     print(line)
         Blacktail_Loop
         Kodiak_Trail
         >>> for line in seq[ seq.index > 10 ]['site'][::2]:
-        ...     print line
+        ...     print(line)
         Blacktail_Loop
         Kodiak_Trail
     """
@@ -245,35 +252,27 @@ class SQLData(CSVData):
     def __init__(
         self,
         config,
-        id,
-        cols,
-        dtypes,
         template,
+        ifilter=None,
         imap=None,
+        islice=None,
         selection=None,
-        slice_=None,
         level=0,
     ):
-        self.template = template
         self.config = config
-        self.id = id
-        self.cols = cols
-        self.dtypes = dtypes
-        self.selection = selection or []
-        self.slice = slice_ or (slice(None),)
+        self.template = template
         self.level = level
-        self.imap = imap or []
 
+        self.ifilter = ifilter or []
+        self.imap = imap or []
+        self.islice = islice or []
+
+        # self.cols = None
+        self.selection = selection or []
         # mapping between variable names and their columns
         self.mapping = {
             key: config[key]["col"] for key in config if "col" in config[key]
         }
-
-    @property
-    def dtype(self):
-        return np.dtype(
-            {"names": list(self.dtypes.keys()), "formats": list(self.dtypes.values())}
-        )
 
     @property
     def query(self):
@@ -282,24 +281,29 @@ class SQLData(CSVData):
         else:
             order = ""
 
-        if isinstance(self.cols, tuple):
-            cols = self.cols
-        else:
-            cols = (self.cols,)
-
         where, params = parse_queries(self.selection, self.mapping)
         if where:
             where = "WHERE {conditions}".format(conditions=" AND ".join(where))
         else:
             where = ""
 
+        cols = tuple(key for key in self.config if "col" in self.config[key])
+
+        limit = sys.maxsize
+        offset = 0
+
+        # retrieve limit and offset from islice
+        if self.islice is not None and len(self.islice) > 0:
+            limit = max(self.islice, key=lambda x: x.stop).stop or sys.maxsize
+            offset = 0
+
         sql = "SELECT {cols} FROM {table} {where} {order} LIMIT {limit} OFFSET {offset}".format(
             cols=", ".join(self.config[key]["col"] for key in cols),
             table=self.config["database"]["table"],
             where=where,
             order=order,
-            limit=(self.slice[0].stop or sys.maxsize) - (self.slice[0].start or 0),
-            offset=self.slice[0].start or 0,
+            limit=limit,
+            offset=offset,
         )
 
         if params:
@@ -313,17 +317,35 @@ class SQLData(CSVData):
             rv = data.rowcount
         return rv
 
+    def __getitem__(self, key):
+        # call parent
+        out = super().__getitem__(key)
+
+        # # return the data for a children
+        # if isinstance(key, str):
+        #     out.cols = key
+
+        # # return a new object with requested columns
+        # elif isinstance(key, list):
+        #     out.cols = tuple(key)
+
+        # record constraint on our selections, we need to maintain them similar to the old version
+        # so we can parse them to SQL later
+        if isinstance(key, ConstraintExpression):
+            out.selection.extend(str(key).split("&"))
+
+        return out
+
     def __iter__(self):
         with session_scope(self.config["database"]["dsn"]) as conn:
             data = conn.execute(*self.query)
 
             # there's no standard way of choosing every n result from a query using
             # SQL, so we need to filter it on Python side
-            data = itertools.islice(data, 0, None, self.slice[0].step)
-
-            # return data from a children BaseType, not a Sequence
-            if not isinstance(self.cols, tuple):
-                data = itertools.imap(operator.itemgetter(0), data)
+            for s in self.islice:
+                data = itertools.islice(data, s.start, s.stop, s.step)
+            for m in self.imap:
+                data = map(m, data)
 
             for row in data:
                 yield row
@@ -331,13 +353,11 @@ class SQLData(CSVData):
     def __copy__(self):
         return self.__class__(
             self.config,
-            self.id,
-            self.cols[:],
-            self.dtypes,
-            self.template,
-            self.imap,
+            copy.copy(self.template),
+            self.ifilter[:],
+            self.imap[:],
+            self.islice[:],
             self.selection[:],
-            self.slice[:],
             self.level,
         )
 
