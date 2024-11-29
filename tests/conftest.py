@@ -117,7 +117,6 @@ def testdb(base_engine):
     base_engine.execute("INSERT INTO mytable (foo, bar) VALUES (1, 'hello world');")
     yield base_engine
 
-
 @pytest.fixture(scope="session")
 def testconfig(testdb, database_uri):
     config = f"""database:
@@ -135,6 +134,51 @@ sequence:
 foo:
   col: "foo"
   type: Integer
+"""
+    with NamedTemporaryFile("w") as myconfig:
+        myconfig.write(config)
+        myconfig.flush()
+        yield myconfig.name
+
+@pytest.fixture(scope="session")
+def testdb_basics(base_engine):
+    data = [
+        (10, 15.2, 'Diamond_St'),
+        (11, 13.1, 'Blacktail_Loop'),
+        (12, 13.3, 'Platinum_St'),
+        (13, 12.1, 'Kodiak_Trail')]
+    out = base_engine.execute("CREATE TABLE test_values (idx INTEGER, temperature real, site text)")
+    dataset = ",".join([f"({x[0]},{x[1]},'{x[2]}')" for x in data])
+    print(dataset)
+    out = base_engine.execute(f"INSERT INTO test_values (idx, temperature, site) VALUES {dataset} ")
+    yield base_engine
+
+@pytest.fixture(scope="session")
+def testconfig_basics(testdb_basics, database_uri):
+    config = f"""
+database:
+  dsn: "{database_uri}"
+  id: "test_values"
+  table: "test_values"
+
+dataset:
+  NC_GLOBAL:
+    name: "test_values dataset"
+
+sequence:
+  name: "a_sequence"
+
+idx:
+  col: "idx"
+  type: Integer
+
+temperature:
+    col: "temperature"
+    type: Float
+
+site:
+    col: "site"
+    type: String
 """
     with NamedTemporaryFile("w") as myconfig:
         myconfig.write(config)
