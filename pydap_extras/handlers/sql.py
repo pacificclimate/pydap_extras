@@ -32,6 +32,7 @@ example:
         global_range: [-180, 180]
         valid_range: !Query 'SELECT min(lon), max(lon) FROM test'
 """
+
 import sys
 import os
 import itertools
@@ -64,6 +65,7 @@ class EngineCreator(dict):
 
 
 Engines = EngineCreator()
+
 
 # From http://docs.sqlalchemy.org/en/rel_0_9/orm/session.html#session-faq-whentocreate
 @contextmanager
@@ -180,7 +182,7 @@ class SQLData(CSVData):
         >>> out = c.executemany("INSERT INTO test VALUES (?, ?, ?)", data)
         >>> conn.commit()
         >>> c.close()
-    
+
     And to retrieve data:
         >>> config = {
         ...     'database': { 'dsn': 'sqlite:///test.db', 'table': 'test', 'order': 'idx' },
@@ -251,8 +253,8 @@ class SQLData(CSVData):
         self,
         config,
         template,
-        ifilter=None, 
-        imap=None, 
+        ifilter=None,
+        imap=None,
         islice=None,
         selection=None,
         level=0,
@@ -279,7 +281,6 @@ class SQLData(CSVData):
         else:
             order = ""
 
-
         where, params = parse_queries(self.selection, self.mapping)
         if where:
             where = "WHERE {conditions}".format(conditions=" AND ".join(where))
@@ -287,7 +288,7 @@ class SQLData(CSVData):
             where = ""
 
         cols = tuple(key for key in self.config if "col" in self.config[key])
-        
+
         limit = sys.maxsize
         offset = 0
 
@@ -302,7 +303,7 @@ class SQLData(CSVData):
             where=where,
             order=order,
             limit=limit,
-            offset=offset
+            offset=offset,
         )
 
         if params:
@@ -315,7 +316,7 @@ class SQLData(CSVData):
             data = conn.execute(*self.query)
             rv = data.rowcount
         return rv
-    
+
     def __getitem__(self, key):
         # call parent
         out = super().__getitem__(key)
@@ -331,7 +332,7 @@ class SQLData(CSVData):
         # record constraint on our selections, we need to maintain them similar to the old version
         # so we can parse them to SQL later
         if isinstance(key, ConstraintExpression):
-            out.selection.extend( str(key).split('&') )
+            out.selection.extend(str(key).split("&"))
 
         return out
 

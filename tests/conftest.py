@@ -41,6 +41,7 @@ def pkg_file_root():
 
     return f
 
+
 @pytest.fixture
 def netcdf_handler(pkg_file_root):
     fname = pkg_file_root("tests") / "data" / "tiny_bccaq2_wo_recvars.nc"
@@ -117,6 +118,7 @@ def testdb(base_engine):
     base_engine.execute("INSERT INTO mytable (foo, bar) VALUES (1, 'hello world');")
     yield base_engine
 
+
 @pytest.fixture(scope="session")
 def testconfig(testdb, database_uri):
     config = f"""database:
@@ -140,18 +142,25 @@ foo:
         myconfig.flush()
         yield myconfig.name
 
+
 @pytest.fixture(scope="session")
 def testdb_basics(base_engine):
     data = [
-        (10, 15.2, 'Diamond_St'),
-        (11, 13.1, 'Blacktail_Loop'),
-        (12, 13.3, 'Platinum_St'),
-        (13, 12.1, 'Kodiak_Trail')]
-    out = base_engine.execute("CREATE TABLE test_values (idx INTEGER, temperature real, site text)")
+        (10, 15.2, "Diamond_St"),
+        (11, 13.1, "Blacktail_Loop"),
+        (12, 13.3, "Platinum_St"),
+        (13, 12.1, "Kodiak_Trail"),
+    ]
+    out = base_engine.execute(
+        "CREATE TABLE test_values (idx INTEGER, temperature real, site text)"
+    )
     dataset = ",".join([f"({x[0]},{x[1]},'{x[2]}')" for x in data])
     print(dataset)
-    out = base_engine.execute(f"INSERT INTO test_values (idx, temperature, site) VALUES {dataset} ")
+    out = base_engine.execute(
+        f"INSERT INTO test_values (idx, temperature, site) VALUES {dataset} "
+    )
     yield base_engine
+
 
 @pytest.fixture(scope="session")
 def testconfig_basics(testdb_basics, database_uri):
@@ -460,7 +469,7 @@ def raw_handler_get_vars_mock(monkeypatch, test_db_with_met_obs):
 
 @pytest.fixture(scope="session")
 def test_h5(pkg_file_root):
-    return pkg_file_root("tests")  / "data" / "test.h5"
+    return pkg_file_root("tests") / "data" / "test.h5"
 
 
 @pytest.fixture(scope="session", params=["/tasmax", "/tasmin", "/pr"])
